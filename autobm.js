@@ -1,10 +1,11 @@
 (() => {
   // ================= CẤU HÌNH =================
-  const SERVER_WS_URL = 'wss://autobookmart.onrender.com'; // THAY URL THỰC TẾ
+  const SERVER_WS_URL = 'wss://autobookmart.onrender.com'; // THAY BẰNG URL THỰC TẾ
 
   // ================= CSS =================
   const style = document.createElement('style');
   style.textContent = `
+    /* Popup chính */
     #cf2-popup{position:fixed;top:20px;left:50%;transform:translateX(-50%);width:900px;max-height:95vh;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.3);border-radius:12px;z-index:9999;font-family:Arial;display:flex;flex-direction:column;resize:both;overflow:auto}
     #cf2-popup .popup-header{cursor:move;display:flex;justify-content:space-between;align-items:center;padding:10px 15px;background:#f5f5f5;border-radius:12px 12px 0 0;user-select:none}
     #cf2-popup .popup-header h3{margin:0;font-size:16px;flex:1}
@@ -35,6 +36,7 @@
     #cf2-popup th,#cf2-popup td{border:1px solid #ddd;padding:8px;text-align:left}
     #cf2-popup .scan-buttons{display:flex;gap:10px;margin-bottom:10px}
     #cf2-popup .vouch-date-header{font-weight:bold;margin-top:12px;padding:4px 0;border-bottom:1px solid #eee;font-size:14px;color:#333}
+    /* Thêm class trạng thái cho tab lưu mã */
     .vbm-success{color:#0a0;font-weight:bold}
     .vbm-error{color:#d00;font-weight:bold}
     .vbm-warn{color:#e67e22;font-weight:bold}
@@ -58,7 +60,6 @@
         <button class="tab-btn active" data-tab="flash">⚡ Flash Sale</button>
         <button class="tab-btn" data-tab="voucher">🎫 Voucher Shop</button>
         <button class="tab-btn" data-tab="scp">🎯 SCP Deals</button>
-        <button class="tab-btn" data-tab="rcmd">🎯 Scan Gợi ý</button>
         <button class="tab-btn" data-tab="savevoucher">💾 Lưu mã</button>
         <button class="tab-btn" data-tab="scan">📋 Scan SP</button>
       </div>
@@ -104,7 +105,7 @@
         <div id="vouch-result"></div>
       </div>
 
-      <!-- SCP DEALS -->
+      <!-- SCP DEALS (Tích hợp Bookmark 1) -->
       <div class="tab-content" id="scp-content">
         <div class="mode-row">
           <label><input type="radio" name="scp-mode" value="html" checked> Quét HTML</label>
@@ -118,21 +119,7 @@
         <div id="scp-result" style="margin-top:10px"></div>
       </div>
 
-      <!-- SCAN GỢI Ý -->
-      <div class="tab-content" id="rcmd-content">
-        <div class="mode-row">
-          <label><input type="radio" name="rcmd-mode" value="url" checked> Tự động (URL shop)</label>
-          <label><input type="radio" name="rcmd-mode" value="id"> Nhập Shop ID</label>
-        </div>
-        <textarea id="rcmd-input" placeholder="Nhập Shop ID (nếu chọn Nhập Shop ID)"></textarea>
-        <label>Giảm giá ≥ <input id="rcmd-min" type="number" value="30" min="0" max="99">%</label>
-        <label>Số sản phẩm tối đa <input id="rcmd-maxitems" type="number" value="200" min="1" max="1000"></label>
-        <button id="rcmd-search" class="popup-action">🔍 Quét sản phẩm gợi ý</button>
-        <div id="rcmd-progress" class="progress"></div>
-        <div id="rcmd-result" style="margin-top:10px"></div>
-      </div>
-
-      <!-- LƯU MÃ -->
+      <!-- LƯU MÃ VOUCHER (Tích hợp Bookmark 2) -->
       <div class="tab-content" id="savevoucher-content">
         <textarea id="sv-input" placeholder="Nhập mã voucher, mỗi mã một dòng..." style="height:80px"></textarea>
         <button id="sv-save" class="popup-action">📥 Lưu tất cả</button>
@@ -230,11 +217,12 @@
     return [...ids];
   }
 
-  // ================= SCAN SP =================
+  // ================= SCAN SP (LƯU LỊCH SỬ) =================
   const SCAN_KEY = 'cf2_scanned_shops_list';
   function scanGetScanned() { try { return JSON.parse(localStorage.getItem(SCAN_KEY)) || []; } catch (e) { return []; } }
   function scanAddScanned(ids) { const cur = scanGetScanned(); const upd = [...new Set([...cur, ...ids])]; localStorage.setItem(SCAN_KEY, JSON.stringify(upd)); return upd; }
   function scanReset() { localStorage.removeItem(SCAN_KEY); }
+
   function scanPage() {
     const shopDiv = $('scan-shopid'), prodDiv = $('scan-product');
     const products = [];
@@ -287,7 +275,7 @@
     if (confirm('Xóa toàn bộ lịch sử shop đã quét?')) { scanReset(); scanPage(); }
   });
 
-  // ================= FLASH SALE =================
+  // ================= FLASH SALE (giữ nguyên từ gốc) =================
   const FLASH_KEY = 'cf2_scanned_shops';
   let flashItems = [], flashAbort = null;
   function flashGetScanned() { try { return JSON.parse(localStorage.getItem(FLASH_KEY)) || []; } catch (e) { return []; } }
@@ -309,6 +297,7 @@
       return modelIds.map(mid => map[mid] || ('Model ' + mid)).join(', ');
     } catch (e) { return null; }
   }
+
   function flashRender() {
     const d = $('flash-result');
     d.innerHTML = '';
@@ -335,6 +324,7 @@
       };
     });
   }
+
   $('flash-copyall').onclick = () => {
     const now = Math.floor(Date.now() / 1000);
     const all = flashItems.map(i => {
@@ -350,7 +340,9 @@
     });
     sendResultToServer('⚡ Flash Sale:\n' + all);
   };
+
   $('flash-reset').onclick = () => { if (confirm('Xóa lịch sử quét Flash Sale?')) { flashReset(); flashUpdateInfo(); } };
+
   async function fetchFlashSale(shopId) {
     const ctrl = flashAbort;
     const r = await fetch('https://shopee.vn/api/v4/shop/get_shop_flash_sale_items?shopid=' + shopId, { headers: { 'x-requested-with': 'XMLHttpRequest' }, credentials: 'include', signal: ctrl ? ctrl.signal : undefined });
@@ -367,6 +359,7 @@
     }
     return items;
   }
+
   async function processBatchFlash(shopIds, min, ongoing, now, prog, minPriceK) {
     let collected = [];
     let i = 0;
@@ -388,8 +381,11 @@
           if (ongoing) filtered = filtered.filter(it => it.start_time <= now && it.end_time >= now);
           collected.push(...filtered);
         } catch (e) {
-          if (e.message === 'BLOCKED') { prog.innerHTML = '<br><span class="warning">🚫 Bị chặn (403/429). Dừng lại.</span>'; i = shopIds.length; break; }
-          else { prog.innerHTML += '<br><span style="color:red">Lỗi shop ' + sid + ': ' + e.message + '</span>'; }
+          if (e.message === 'BLOCKED') {
+            prog.innerHTML = '<br><span class="warning">🚫 Bị chặn (403/429). Dừng lại.</span>';
+            i = shopIds.length;
+            break;
+          } else { prog.innerHTML += '<br><span style="color:red">Lỗi shop ' + sid + ': ' + e.message + '</span>'; }
         }
       }
       i += batch.length;
@@ -401,6 +397,7 @@
     }
     return collected;
   }
+
   $('flash-search').onclick = async () => {
     const mode = document.querySelector('input[name="flash-mode"]:checked').value;
     const input = $('flash-input').value.trim();
@@ -474,7 +471,7 @@
     flashRender();
   };
 
-  // ================= VOUCHER SHOP =================
+  // ================= VOUCHER SHOP (giữ nguyên từ gốc) =================
   const VOUCH_KEY = 'vcat_scanned_shops';
   let vouchVouchers = [], vouchAbort = null;
   function vouchGetScanned() { try { return JSON.parse(localStorage.getItem(VOUCH_KEY)) || []; } catch (e) { return []; } }
@@ -644,7 +641,7 @@
     else { prog.innerHTML = 'Đã lấy ' + vouchers.length + ' voucher từ ' + shopIds.length + ' shop.'; vouchVouchers = vouchers; vouchRender(); }
   };
 
-  // ================= SCP DEALS =================
+  // ================= SCP DEALS (TÍCH HỢP BOOKMARK 1) =================
   let scpDeals = [], scpVouchers = [];
   const fmtK = n => { let k = n / 1e8; return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + 'k'; };
   const fmtTime = ts => new Date(ts * 1e3).toLocaleString('vi-VN', { hour12: false });
@@ -749,259 +746,19 @@
     }
     prog.innerHTML = `Xong! ${scpDeals.length} deals, ${scpVouchers.length} vouchers.`;
     renderSCP();
+    // Gửi kết quả qua WebSocket (tùy chọn)
     if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(`🎯 SCP Deals: ${scpDeals.length} deals, ${scpVouchers.length} vouchers`);
+      const summary = `🎯 SCP Deals: ${scpDeals.length} deals, ${scpVouchers.length} vouchers`;
+      ws.send(summary);
     }
   };
 
-// ================= SCAN GỢI Ý (RCMD ITEMS) =================
-// ================= SCAN GỢI Ý (RCMD ITEMS) =================
-function getShopIdFromUrl() {
-    const href = location.href;
-    let m = href.match(/\/shop\/(\d+)/);
-    if (m) return m[1];
-    m = href.match(/i\.(\d+)\.(\d+)/);
-    if (m) return m[1];
-    m = href.match(/\/product\/(\d+)\/(\d+)/);
-    if (m) return m[1];
-    return null;
-}
-
-const fmtKLocal = n => {
-    const k = n / 1e8;
-    return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + 'k';
-};
-
-async function fetchRcmdItemsPage(shopId, offset, limit = 48) {
-    console.log(`[RCMD] Fetching shop=${shopId}, offset=${offset}, limit=${limit}`);
-    
-    const res = await fetch('https://shopee.vn/api/v4/shop/rcmd_items', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'x-requested-with': 'XMLHttpRequest',
-            'x-api-source': 'pc',
-            'x-csrftoken': getCsrfToken(),
-            'Referer': location.href
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-            bundle: 'shop_page_rfy',
-            shop_id: parseInt(shopId),
-            limit,
-            offset,
-            upstream: 'pdp',
-            item_card_use_scene: 'rfy_landing_page',
-            is_insert_new_arrival: false
-        })
-    });
-    
-    if (!res.ok) {
-        const text = await res.text();
-        console.error(`[RCMD] HTTP ${res.status}:`, text.substring(0, 500));
-        throw new Error('HTTP ' + res.status);
-    }
-    
-    const json = await res.json();
-    console.log(`[RCMD] Response error=${json.error}, total=${json.data?.total}, cards=${json.data?.centralize_item_card?.item_cards?.length}`);
-    
-    if (json.error !== 0) {
-        throw new Error(json.error_msg || 'API error ' + json.error);
-    }
-    
-    return json.data;
-}
-
-async function scanAllRcmdItems(shopId, maxItems, minDiscount, prog) {
-    let allItems = [];
-    let offset = 0;
-    const limit = 48;
-    let totalFromApi = null;
-    let hasError = false;
-    let pageCount = 0;
-
-    while (true) {
-        pageCount++;
-        const cap = totalFromApi !== null ? Math.min(totalFromApi, maxItems) : '?';
-        prog.innerHTML = `⏳ Đang tải trang ${pageCount}... ${allItems.length}/${cap} SP (offset=${offset})`;
-
-        let data;
-        try {
-            data = await fetchRcmdItemsPage(shopId, offset, limit);
-        } catch (e) {
-            hasError = true;
-            console.error('[RCMD] Fetch error:', e);
-            prog.innerHTML = allItems.length > 0
-                ? `⚠️ Lỗi ở offset=${offset}: ${e.message}. Giữ ${allItems.length} SP đã lấy.`
-                : `<span class="warning">❌ Lỗi gọi API: ${e.message}</span>`;
-            break;
-        }
-
-        if (totalFromApi === null && typeof data.total === 'number') {
-            totalFromApi = data.total;
-            console.log(`[RCMD] Total items from API: ${totalFromApi}`);
-        }
-
-        const cards = data?.centralize_item_card?.item_cards || [];
-        console.log(`[RCMD] Got ${cards.length} cards at offset ${offset}`);
-        
-        if (!cards.length) {
-            console.log('[RCMD] No more cards, breaking');
-            break;
-        }
-
-        allItems.push(...cards);
-
-        if (data.no_more) {
-            console.log('[RCMD] no_more=true, breaking');
-            break;
-        }
-        if (totalFromApi !== null && allItems.length >= totalFromApi) {
-            console.log('[RCMD] Reached total from API');
-            break;
-        }
-        if (allItems.length >= maxItems) {
-            console.log('[RCMD] Reached maxItems');
-            break;
-        }
-        if (cards.length < limit) {
-            console.log('[RCMD] Last page (cards < limit)');
-            break;
-        }
-
-        offset += limit;
-        await new Promise(r => setTimeout(r, 600 + Math.random() * 900));
-    }
-
-    if (allItems.length > maxItems) allItems = allItems.slice(0, maxItems);
-
-    const filtered = allItems.filter(c => {
-        const dp = c.item_card_display_price || {};
-        const discount = dp.discount || dp.show_discount || dp.raw_discount || 0;
-        return discount >= minDiscount;
-    });
-    
-    console.log(`[RCMD] Filtered: ${filtered.length}/${allItems.length} items with discount >= ${minDiscount}%`);
-    return { items: filtered, hasError, totalScanned: allItems.length };
-}
-
-function buildRcmdLine(card, isHtml) {
-    const dp = card.item_card_display_price || {};
-    const name = card.item_card_displayed_asset?.name || card.name || 'Không tên';
-    const shortName = name.length > 40 ? name.substring(0, 40) + '...' : name;
-    const discount = dp.discount || dp.show_discount || dp.raw_discount || 0;
-    const price = dp.price || 0;
-    const origPrice = dp.strikethrough_price || dp.original_price || 0;
-    const link = `https://shopee.vn/product/${card.shopid}/${card.itemid}`;
-    const priceNow = Math.round(price / 100000).toLocaleString('vi-VN');
-    const priceOld = Math.round(origPrice / 100000).toLocaleString('vi-VN');
-    const pv = dp.recommended_platform_voucher_info;
-    const sv = dp.recommended_shop_voucher_info;
-
-    if (isHtml) {
-        const priceHtml = origPrice > price
-            ? `<s>${priceOld}đ</s> ${priceNow}đ`
-            : `${priceNow}đ`;
-        let vHtml = '';
-        if (pv) {
-            const d = fmtKLocal(pv.voucher_discount || 0);
-            const mn = pv.min_spend ? fmtKLocal(pv.min_spend) : '0đ';
-            vHtml += ` <span style="color:#e74c3c;font-size:11px">[PV:${d}/${mn}]</span>`;
-        }
-        if (sv) {
-            const d = fmtKLocal(sv.voucher_discount || 0);
-            const mn = sv.min_spend ? fmtKLocal(sv.min_spend) : '0đ';
-            vHtml += ` <span style="color:#2980b9;font-size:11px">[SV:${d}/${mn}]</span>`;
-        }
-        return `-${discount}% ${shortName}: <a href="${link}" target="_blank">${link}</a> ${priceHtml}${vHtml}`;
-    } else {
-        const priceText = origPrice > price ? `${priceOld}→${priceNow}đ` : `${priceNow}đ`;
-        let vText = '';
-        if (pv) {
-            const d = fmtKLocal(pv.voucher_discount || 0);
-            const mn = pv.min_spend ? fmtKLocal(pv.min_spend) : '0đ';
-            vText += ` [PV:${d}/${mn}]`;
-        }
-        if (sv) {
-            const d = fmtKLocal(sv.voucher_discount || 0);
-            const mn = sv.min_spend ? fmtKLocal(sv.min_spend) : '0đ';
-            vText += ` [SV:${d}/${mn}]`;
-        }
-        return `-${discount}% ${shortName}: ${link} ${priceText}${vText}`;
-    }
-}
-
-function renderRcmdResult(items, totalScanned) {
-    const d = $('rcmd-result');
-    d.innerHTML = '';
-    if (!items.length) {
-        d.innerHTML = `<p>Không có sản phẩm phù hợp. (Đã quét ${totalScanned} SP)</p>`;
-        return;
-    }
-
-    items.sort((a, b) => {
-        const da = (a.item_card_display_price?.discount || a.item_card_display_price?.show_discount || a.item_card_display_price?.raw_discount || 0);
-        const db = (b.item_card_display_price?.discount || b.item_card_display_price?.show_discount || b.item_card_display_price?.raw_discount || 0);
-        return db - da;
-    });
-
-    let html = `<button id="rcmd-copyall-btn" class="copy-all" style="margin-bottom:8px">📋 Copy tất cả (${items.length})</button>`;
-    items.forEach(card => {
-        html += `<div class="result-item"><span class="link-text">${buildRcmdLine(card, true)}</span></div>`;
-    });
-    d.innerHTML = html;
-
-    document.getElementById('rcmd-copyall-btn').addEventListener('click', function () {
-        const text = items.map(c => buildRcmdLine(c, false)).join('\n');
-        navigator.clipboard.writeText(text).then(() => {
-            this.textContent = '✓ Đã copy!';
-            setTimeout(() => this.textContent = `📋 Copy tất cả (${items.length})`, 1500);
-        });
-        sendResultToServer('🎯 RCMD:\n' + text);
-    });
-}
-
-$('rcmd-search').onclick = async () => {
-    const mode = document.querySelector('input[name="rcmd-mode"]:checked').value;
-    let shopId;
-
-    if (mode === 'url') {
-        shopId = getShopIdFromUrl();
-        if (!shopId) {
-            $('rcmd-progress').innerHTML = '<span class="warning">⚠️ Không tìm thấy shop ID trong URL.<br>Cần đứng ở trang <b>shop</b>, <b>sản phẩm</b>, hoặc <b>recommendation-landing</b> — hoặc chọn "Nhập Shop ID" và nhập thủ công.</span>';
-            return;
-        }
-    } else {
-        shopId = $('rcmd-input').value.trim();
-        if (!shopId || !/^\d+$/.test(shopId)) {
-            $('rcmd-progress').innerHTML = '<span class="warning">⚠️ Shop ID không hợp lệ (chỉ nhập số).</span>';
-            return;
-        }
-    }
-
-    const maxItems = parseInt($('rcmd-maxitems').value) || 200;
-    const minDiscount = parseInt($('rcmd-min').value) || 30;
-    const prog = $('rcmd-progress');
-
-    $('rcmd-result').innerHTML = '';
-    prog.innerHTML = `🔍 Đang quét shop ${shopId}...`;
-
-    const { items, hasError, totalScanned } = await scanAllRcmdItems(shopId, maxItems, minDiscount, prog);
-
-    if (items.length > 0 || !hasError) {
-        prog.innerHTML = `✅ Xong! <b>${items.length}</b> SP có discount ≥ ${minDiscount}% / ${totalScanned} SP đã quét (shop: ${shopId})`;
-    }
-
-    renderRcmdResult(items, totalScanned);
-    sendResultToServer(`🎯 Scan Gợi ý shop ${shopId}: ${items.length} SP ≥${minDiscount}%`);
-};
-  
-  // ================= LƯU MÃ VOUCHER =================
+  // ================= LƯU MÃ VOUCHER (TÍCH HỢP BOOKMARK 2) =================
   function formatTimeParts(ts) {
     const d = new Date(ts * 1000);
     return { hour: d.getHours(), day: d.getDate(), month: d.getMonth() + 1 };
   }
-  function formatK2(amount) { return Math.round(amount / 1e8); }
+  function formatK2(amount) { return Math.round(amount / 1e8); } // Đổi từ 1/100000000 sang 1e8 cho dễ đọc
 
   function addSaveRow(code, data) {
     const tbody = document.querySelector('#sv-table tbody');
@@ -1010,23 +767,32 @@ $('rcmd-search').onclick = async () => {
     const tdStatus = document.createElement('td');
     const tdTime = document.createElement('td');
 
+    // Trường hợp không có data (lỗi mạng)
     if (!data) {
       tdInfo.textContent = `🔸 ${code}`;
       tdStatus.className = 'vbm-error'; tdStatus.textContent = '❌ Lỗi mạng';
       tdTime.textContent = '—';
-    } else if (data.error && data.error !== 0) {
+    }
+    // Trường hợp API trả về lỗi (error != 0)
+    else if (data.error && data.error !== 0) {
       tdInfo.textContent = `🔸 ${code}`;
       tdStatus.className = 'vbm-error'; tdStatus.textContent = `❌ ${data.error_msg || 'Lỗi API'}`;
       tdTime.textContent = '—';
-    } else if (data.voucher) {
+    }
+    // Trường hợp thành công, có voucher
+    else if (data.voucher) {
       const v = data.voucher;
       const start = formatTimeParts(v.start_time || 0);
       const end = formatTimeParts(v.end_time || 0);
+
+      // Tính giảm giá hiển thị
       const discountText = v.reward_percentage > 0
-        ? `${v.reward_percentage}% max ${formatK2(v.reward_cap||0)}k`
-        : `${formatK2(v.reward_value||0)}k`;
-      const minSpend = `${formatK2(v.min_spend||0)}k`;
+        ? `${v.reward_percentage}% max ${formatK2(v.reward_cap || 0)}k`
+        : `${formatK2(v.reward_value || 0)}k`;
+      const minSpend = `${formatK2(v.min_spend || 0)}k`;
       const link = `https://shopee.vn/search?promotionId=${v.promotionid}&signature=${v.signature}&voucherCode=${code}`;
+
+      // Cột thông tin
       tdInfo.innerHTML = `- ${start.hour}h: ${code} giảm ${discountText}/${minSpend} áp list: <a href="${link}" target="_blank">link</a>`;
       const copyBtn = document.createElement('button');
       copyBtn.className = 'copy-btn';
@@ -1040,21 +806,45 @@ $('rcmd-search').onclick = async () => {
       };
       tdInfo.appendChild(copyBtn);
 
-      const msgCode = data.invalid_message_code;
-      if (msgCode === 0) { tdStatus.className = 'vbm-success'; tdStatus.textContent = '✅ Đã lưu'; }
-      else if (msgCode === 4) { tdStatus.className = 'vbm-error'; tdStatus.textContent = '❌ Hết lượt'; }
-      else if (msgCode === 14) { tdStatus.className = 'vbm-warn'; tdStatus.textContent = '⚠️ Đã lưu trước'; }
-      else if (msgCode !== null && msgCode !== undefined) { tdStatus.className = 'vbm-warn'; tdStatus.textContent = `⚠️ Trạng thái (mã ${msgCode})`; }
-      else { tdStatus.className = 'vbm-warn'; tdStatus.textContent = '⚠️ Không xác định'; }
+      // Cột trạng thái
+      const msgCode = data.invalid_message_code; // Lấy từ data, không phải từ voucher
+      if (msgCode === 0) {
+        tdStatus.className = 'vbm-success';
+        tdStatus.textContent = '✅ Đã lưu';
+      } else if (msgCode === 4) {
+        tdStatus.className = 'vbm-error';
+        tdStatus.textContent = '❌ Hết lượt';
+      } else if (msgCode === 14) {
+        tdStatus.className = 'vbm-warn';
+        tdStatus.textContent = '⚠️ Đã lưu trước';
+      } else if (msgCode !== null && msgCode !== undefined) {
+        tdStatus.className = 'vbm-warn';
+        tdStatus.textContent = `⚠️ Trạng thái (mã ${msgCode})`;
+      } else {
+        tdStatus.className = 'vbm-warn';
+        tdStatus.textContent = '⚠️ Không xác định';
+      }
 
+      // Cột thời gian
       tdTime.textContent = `${start.hour}h - ${start.day}/${start.month} | ${end.hour}h - ${end.day}/${end.month}`;
-    } else {
+    }
+    // Trường hợp không có voucher nhưng có invalid_message_code
+    else {
       tdInfo.textContent = `🔸 ${code}`;
       const msgCode = data.invalid_message_code;
-      if (msgCode === 4) { tdStatus.className = 'vbm-error'; tdStatus.textContent = '❌ Hết lượt'; }
-      else if (msgCode === 14) { tdStatus.className = 'vbm-warn'; tdStatus.textContent = '⚠️ Đã lưu trước'; }
-      else if (msgCode) { tdStatus.className = 'vbm-warn'; tdStatus.textContent = `⚠️ Lỗi (mã ${msgCode})`; }
-      else { tdStatus.className = 'vbm-warn'; tdStatus.textContent = '⚠️ Không thể lưu'; }
+      if (msgCode === 4) {
+        tdStatus.className = 'vbm-error';
+        tdStatus.textContent = '❌ Hết lượt';
+      } else if (msgCode === 14) {
+        tdStatus.className = 'vbm-warn';
+        tdStatus.textContent = '⚠️ Đã lưu trước';
+      } else if (msgCode) {
+        tdStatus.className = 'vbm-warn';
+        tdStatus.textContent = `⚠️ Lỗi (mã ${msgCode})`;
+      } else {
+        tdStatus.className = 'vbm-warn';
+        tdStatus.textContent = '⚠️ Không thể lưu';
+      }
       tdTime.textContent = '—';
     }
 
@@ -1069,6 +859,7 @@ $('rcmd-search').onclick = async () => {
     if (!codes.length) return;
     $('sv-save').disabled = true;
     $('sv-status').textContent = `Đang xử lý ${codes.length} mã...`;
+
     for (let i = 0; i < codes.length; i++) {
       const code = codes[i];
       $('sv-status').textContent = `Đang xử lý ${i+1}/${codes.length}: ${code}...`;
@@ -1080,15 +871,18 @@ $('rcmd-search').onclick = async () => {
         });
         const json = await res.json();
         if (json.error !== 0) {
+          // API lỗi (error != 0)
           addSaveRow(code, { error: json.error, error_msg: json.error_msg });
         } else {
+          // Thành công, truyền json.data (chứa voucher, invalid_message_code...)
           addSaveRow(code, json.data || {});
         }
       } catch (e) {
-        addSaveRow(code, null);
+        addSaveRow(code, null); // Lỗi mạng
       }
-      await new Promise(r => setTimeout(r, 400));
+      await new Promise(r => setTimeout(r, 400)); // Giữ delay 400ms
     }
+
     $('sv-save').disabled = false;
     $('sv-status').textContent = '✅ Hoàn thành!';
   };
@@ -1127,6 +921,7 @@ $('rcmd-search').onclick = async () => {
           document.querySelector('.tab-btn[data-tab="voucher"]').click();
           $('vouch-search').click();
         } else if (cmd.action === 'scan_scp') {
+          // Kích hoạt tab SCP và quét
           document.querySelector('.tab-btn[data-tab="scp"]').click();
           $('scp-search').click();
         } else if (cmd.action === 'save_voucher') {
@@ -1135,9 +930,6 @@ $('rcmd-search').onclick = async () => {
             $('sv-input').value = cmd.codes.join('\n');
             $('sv-save').click();
           }
-        } else if (cmd.action === 'scan_rcmd') {
-          document.querySelector('.tab-btn[data-tab="rcmd"]').click();
-          $('rcmd-search').click();
         }
       } catch (e) {}
     };

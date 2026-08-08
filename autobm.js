@@ -755,7 +755,7 @@
   };
 
 // ================= SCAN GỢI Ý (RCMD ITEMS) =================
-// ================= SCAN GỢI Ý (RCMD ITEMS) - DEBUG VERSION =================
+// ================= SCAN GỢI Ý (RCMD ITEMS) =================
 function getShopIdFromUrl() {
     const href = location.href;
     let m = href.match(/\/shop\/(\d+)/);
@@ -773,34 +773,42 @@ const fmtKLocal = n => {
 };
 
 async function fetchRcmdItemsPage(shopId, offset, limit = 48) {
-    const csrf = getCsrfToken();
-    const payload = {
-        bundle: 'shop_page_rfy',
-        shop_id: parseInt(shopId),
-        limit,
-        offset,
-        upstream: 'pdp',
-        item_card_use_scene: 'rfy_landing_page',   // ✅ Đã sửa chính tả
-        is_insert_new_arrival: false
-    };
-    console.log(`[RCMD] Gửi request offset=${offset}`, payload);
+    console.log(`[RCMD] Fetching shop=${shopId}, offset=${offset}, limit=${limit}`);
+    
     const res = await fetch('https://shopee.vn/api/v4/shop/rcmd_items', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'x-requested-with': 'XMLHttpRequest',
             'x-api-source': 'pc',
-            'x-csrftoken': csrf,
-            'Referer': `https://shopee.vn/shop/${shopId}/recommendation-landing?upstream=pdp`
+            'x-csrftoken': getCsrfToken(),
+            'Referer': location.href
         },
         credentials: 'include',
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+            bundle: 'shop_page_rfy',
+            shop_id: parseInt(shopId),
+            limit,
+            offset,
+            upstream: 'pdp',
+            item_card_use_scene: 'rfy_landing_page',
+            is_insert_new_arrival: false
+        })
     });
-    console.log(`[RCMD] Response status=${res.status}`);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    
+    if (!res.ok) {
+        const text = await res.text();
+        console.error(`[RCMD] HTTP ${res.status}:`, text.substring(0, 500));
+        throw new Error('HTTP ' + res.status);
+    }
+    
     const json = await res.json();
-    console.log(`[RCMD] Response data offset=${offset}:`, json);
-    if (json.error !== 0) throw new Error(json.error_msg || 'API error ' + json.error);
+    console.log(`[RCMD] Response error=${json.error}, total=${json.data?.total}, cards=${json.data?.centralize_item_card?.item_cards?.length}`);
+    
+    if (json.error !== 0) {
+        throw new Error(json.error_msg || 'API error ' + json.error);
+    }
+    
     return json.data;
 }
 
@@ -810,60 +818,54 @@ async function scanAllRcmdItems(shopId, maxItems, minDiscount, prog) {
     const limit = 48;
     let totalFromApi = null;
     let hasError = false;
+    let pageCount = 0;
 
     while (true) {
+        pageCount++;
         const cap = totalFromApi !== null ? Math.min(totalFromApi, maxItems) : '?';
-        prog.innerHTML = `⏳ Đang tải... ${allItems.length}/${cap} SP (offset=${offset})`;
+        prog.innerHTML = `⏳ Đang tải trang ${pageCount}... ${allItems.length}/${cap} SP (offset=${offset})`;
 
         let data;
         try {
             data = await fetchRcmdItemsPage(shopId, offset, limit);
         } catch (e) {
             hasError = true;
+            console.error('[RCMD] Fetch error:', e);
             prog.innerHTML = allItems.length > 0
                 ? `⚠️ Lỗi ở offset=${offset}: ${e.message}. Giữ ${allItems.length} SP đã lấy.`
                 : `<span class="warning">❌ Lỗi gọi API: ${e.message}</span>`;
-            console.error(e);
             break;
         }
 
-        // Lấy total (nếu có)
-        if (totalFromApi === null && data.total && data.total > 0) {
+        if (totalFromApi === null && typeof data.total === 'number') {
             totalFromApi = data.total;
-            console.log(`[RCMD] Total from API = ${totalFromApi}`);
+            console.log(`[RCMD] Total items from API: ${totalFromApi}`);
         }
 
-        // Lấy item_cards – hỗ trợ cả trường hợp không có centralize_item_card
-        let cards = [];
-        if (data.centralize_item_card && Array.isArray(data.centralize_item_card.item_cards)) {
-            cards = data.centralize_item_card.item_cards;
-        } else if (Array.isArray(data.item_cards)) {
-            cards = data.item_cards;
-        }
-        console.log(`[RCMD] Trang offset=${offset} có ${cards.length} item_cards`);
-
-        if (cards.length === 0) {
-            console.log('[RCMD] Không còn sản phẩm, dừng.');
+        const cards = data?.centralize_item_card?.item_cards || [];
+        console.log(`[RCMD] Got ${cards.length} cards at offset ${offset}`);
+        
+        if (!cards.length) {
+            console.log('[RCMD] No more cards, breaking');
             break;
         }
 
         allItems.push(...cards);
 
-        // Điều kiện dừng
-        if (data.no_more === true) {
-            console.log('[RCMD] no_more = true');
+        if (data.no_more) {
+            console.log('[RCMD] no_more=true, breaking');
             break;
         }
         if (totalFromApi !== null && allItems.length >= totalFromApi) {
-            console.log(`[RCMD] Đã lấy đủ ${totalFromApi} SP`);
+            console.log('[RCMD] Reached total from API');
             break;
         }
         if (allItems.length >= maxItems) {
-            console.log('[RCMD] Đạt giới hạn maxItems');
+            console.log('[RCMD] Reached maxItems');
             break;
         }
         if (cards.length < limit) {
-            console.log('[RCMD] Số sản phẩm trang cuối < limit, dừng');
+            console.log('[RCMD] Last page (cards < limit)');
             break;
         }
 
@@ -871,25 +873,23 @@ async function scanAllRcmdItems(shopId, maxItems, minDiscount, prog) {
         await new Promise(r => setTimeout(r, 600 + Math.random() * 900));
     }
 
-    // Cắt bớt
     if (allItems.length > maxItems) allItems = allItems.slice(0, maxItems);
-    console.log(`[RCMD] Tổng sản phẩm thô: ${allItems.length}`);
 
-    // Lọc theo discount và in ra để debug
     const filtered = allItems.filter(c => {
-        const discount = c.item_card_display_price?.discount || 0;
-        console.log(` - item ${c.itemid}: discount=${discount}%`);
+        const dp = c.item_card_display_price || {};
+        const discount = dp.discount || dp.show_discount || dp.raw_discount || 0;
         return discount >= minDiscount;
     });
-    console.log(`[RCMD] Sau lọc (≥${minDiscount}%): ${filtered.length} SP`);
-    return { items: filtered, hasError };
+    
+    console.log(`[RCMD] Filtered: ${filtered.length}/${allItems.length} items with discount >= ${minDiscount}%`);
+    return { items: filtered, hasError, totalScanned: allItems.length };
 }
 
 function buildRcmdLine(card, isHtml) {
     const dp = card.item_card_display_price || {};
     const name = card.item_card_displayed_asset?.name || card.name || 'Không tên';
     const shortName = name.length > 40 ? name.substring(0, 40) + '...' : name;
-    const discount = dp.discount || 0;
+    const discount = dp.discount || dp.show_discount || dp.raw_discount || 0;
     const price = dp.price || 0;
     const origPrice = dp.strikethrough_price || dp.original_price || 0;
     const link = `https://shopee.vn/product/${card.shopid}/${card.itemid}`;
@@ -931,15 +931,19 @@ function buildRcmdLine(card, isHtml) {
     }
 }
 
-function renderRcmdResult(items) {
+function renderRcmdResult(items, totalScanned) {
     const d = $('rcmd-result');
     d.innerHTML = '';
     if (!items.length) {
-        d.innerHTML = '<p>Không có sản phẩm phù hợp.</p>';
+        d.innerHTML = `<p>Không có sản phẩm phù hợp. (Đã quét ${totalScanned} SP)</p>`;
         return;
     }
 
-    items.sort((a, b) => (b.item_card_display_price?.discount || 0) - (a.item_card_display_price?.discount || 0));
+    items.sort((a, b) => {
+        const da = (a.item_card_display_price?.discount || a.item_card_display_price?.show_discount || a.item_card_display_price?.raw_discount || 0);
+        const db = (b.item_card_display_price?.discount || b.item_card_display_price?.show_discount || b.item_card_display_price?.raw_discount || 0);
+        return db - da;
+    });
 
     let html = `<button id="rcmd-copyall-btn" class="copy-all" style="margin-bottom:8px">📋 Copy tất cả (${items.length})</button>`;
     items.forEach(card => {
@@ -982,13 +986,13 @@ $('rcmd-search').onclick = async () => {
     $('rcmd-result').innerHTML = '';
     prog.innerHTML = `🔍 Đang quét shop ${shopId}...`;
 
-    const { items, hasError } = await scanAllRcmdItems(shopId, maxItems, minDiscount, prog);
+    const { items, hasError, totalScanned } = await scanAllRcmdItems(shopId, maxItems, minDiscount, prog);
 
-    prog.innerHTML = hasError && items.length === 0
-        ? '<span class="warning">❌ Không lấy được dữ liệu, kiểm tra Console (F12) để biết chi tiết.</span>'
-        : `✅ Xong! <b>${items.length}</b> SP có discount ≥ ${minDiscount}% (shop: ${shopId})`;
+    if (items.length > 0 || !hasError) {
+        prog.innerHTML = `✅ Xong! <b>${items.length}</b> SP có discount ≥ ${minDiscount}% / ${totalScanned} SP đã quét (shop: ${shopId})`;
+    }
 
-    renderRcmdResult(items);
+    renderRcmdResult(items, totalScanned);
     sendResultToServer(`🎯 Scan Gợi ý shop ${shopId}: ${items.length} SP ≥${minDiscount}%`);
 };
   

@@ -1,6 +1,6 @@
 (() => {
   // ================= CẤU HÌNH =================
-  const SERVER_WS_URL = 'wss://YOUR_RENDER_APP.onrender.com'; // THAY BẰNG URL THỰC TẾ
+  const SERVER_WS_URL = 'wss://autobookmart.onrender.com'; // THAY BẰNG URL THỰC TẾ
 
   // ================= CSS =================
   const style = document.createElement('style');

@@ -1,167 +1,17 @@
 (() => {
-  // ================= CẤU HÌNH =================
-  const SERVER_WS_URL = 'wss://autobookmart.onrender.com'; // THAY URL THỰC TẾ
+  console.log('🚀 All-in-One Shopee script loaded');
+  const SERVER_WS_URL = 'wss://autobookmart.onrender.com';
 
-  // ================= CSS =================
   const style = document.createElement('style');
-  style.textContent = `
-    #cf2-popup{position:fixed;top:20px;left:50%;transform:translateX(-50%);width:900px;max-height:95vh;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.3);border-radius:12px;z-index:9999;font-family:Arial;display:flex;flex-direction:column;resize:both;overflow:auto}
-    #cf2-popup .popup-header{cursor:move;display:flex;justify-content:space-between;align-items:center;padding:10px 15px;background:#f5f5f5;border-radius:12px 12px 0 0;user-select:none}
-    #cf2-popup .popup-header h3{margin:0;font-size:16px;flex:1}
-    #cf2-popup .popup-header .header-btns{display:flex;gap:5px;align-items:center}
-    #cf2-popup .popup-header button{background:#ddd;border:none;font-size:18px;cursor:pointer;width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center}
-    #cf2-popup.minimized .popup-body{display:none}
-    #cf2-popup .tab-row{display:flex;border-bottom:1px solid #ddd;flex-wrap:wrap}
-    #cf2-popup .tab-btn{padding:8px 12px;cursor:pointer;background:#f5f5f5;border:none;font-size:13px;margin-right:2px;white-space:nowrap}
-    #cf2-popup .tab-btn.active{background:#fff;font-weight:bold;border:1px solid #ddd;border-bottom:1px solid #fff}
-    #cf2-popup .tab-content{display:none;padding:15px;flex:1;overflow-y:auto}
-    #cf2-popup .tab-content.active{display:block}
-    #cf2-popup textarea{width:100%;height:60px;padding:10px;margin:10px 0;border:1px solid #ddd;border-radius:6px;resize:vertical;box-sizing:border-box}
-    #cf2-popup input[type=number]{width:80px;padding:6px}
-    #cf2-popup button.popup-action{background:#ee4d2d;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin:2px}
-    #cf2-popup .result-item{margin:4px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-    #cf2-popup .link-text{flex:1;word-break:break-all}
-    #cf2-popup .copy-btn{background:#007bff;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer}
-    #cf2-popup .copy-all{background:#28a745;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin:2px}
-    #cf2-popup .info-text{font-size:12px;color:#888}
-    #cf2-popup .mode-row{display:flex;gap:20px;align-items:center;margin:8px 0}
-    #cf2-popup .variant-btn{background:#6c757d;color:#fff;border:none;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:12px;user-select:none}
-    .progress{font-size:13px;color:#555;margin:4px 0}
-    .warning{color:#d9534f;font-weight:bold}
-    .filter-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0}
-    .filter-row label{font-size:13px}
-    .filter-row input{width:60px;padding:4px}
-    #cf2-popup table{width:100%;border-collapse:collapse;margin:10px 0}
-    #cf2-popup th,#cf2-popup td{border:1px solid #ddd;padding:8px;text-align:left}
-    #cf2-popup .scan-buttons{display:flex;gap:10px;margin-bottom:10px}
-    #cf2-popup .vouch-date-header{font-weight:bold;margin-top:12px;padding:4px 0;border-bottom:1px solid #eee;font-size:14px;color:#333}
-    .vbm-success{color:#0a0;font-weight:bold}
-    .vbm-error{color:#d00;font-weight:bold}
-    .vbm-warn{color:#e67e22;font-weight:bold}
-  `;
+  style.textContent = '#cf2-popup{position:fixed;top:20px;left:50%;transform:translateX(-50%);width:900px;max-height:95vh;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.3);border-radius:12px;z-index:9999;font-family:Arial;display:flex;flex-direction:column;resize:both;overflow:auto}#cf2-popup .popup-header{cursor:move;display:flex;justify-content:space-between;align-items:center;padding:10px 15px;background:#f5f5f5;border-radius:12px 12px 0 0;user-select:none}#cf2-popup .popup-header h3{margin:0;font-size:16px;flex:1}#cf2-popup .popup-header .header-btns{display:flex;gap:5px;align-items:center}#cf2-popup .popup-header button{background:#ddd;border:none;font-size:18px;cursor:pointer;width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center}#cf2-popup.minimized .popup-body{display:none}#cf2-popup .tab-row{display:flex;border-bottom:1px solid #ddd;flex-wrap:wrap}#cf2-popup .tab-btn{padding:8px 12px;cursor:pointer;background:#f5f5f5;border:none;font-size:13px;margin-right:2px;white-space:nowrap}#cf2-popup .tab-btn.active{background:#fff;font-weight:bold;border:1px solid #ddd;border-bottom:1px solid #fff}#cf2-popup .tab-content{display:none;padding:15px;flex:1;overflow-y:auto}#cf2-popup .tab-content.active{display:block}#cf2-popup textarea{width:100%;height:60px;padding:10px;margin:10px 0;border:1px solid #ddd;border-radius:6px;resize:vertical;box-sizing:border-box}#cf2-popup input[type=number]{width:80px;padding:6px}#cf2-popup button.popup-action{background:#ee4d2d;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin:2px}#cf2-popup .result-item{margin:4px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}#cf2-popup .link-text{flex:1;word-break:break-all}#cf2-popup .copy-btn{background:#007bff;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer}#cf2-popup .copy-all{background:#28a745;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin:2px}#cf2-popup .info-text{font-size:12px;color:#888}#cf2-popup .mode-row{display:flex;gap:20px;align-items:center;margin:8px 0}#cf2-popup .variant-btn{background:#6c757d;color:#fff;border:none;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:12px;user-select:none}.progress{font-size:13px;color:#555;margin:4px 0}.warning{color:#d9534f;font-weight:bold}.filter-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0}.filter-row label{font-size:13px}.filter-row input{width:60px;padding:4px}#cf2-popup table{width:100%;border-collapse:collapse;margin:10px 0}#cf2-popup th,#cf2-popup td{border:1px solid #ddd;padding:8px;text-align:left}#cf2-popup .scan-buttons{display:flex;gap:10px;margin-bottom:10px}#cf2-popup .vouch-date-header{font-weight:bold;margin-top:12px;padding:4px 0;border-bottom:1px solid #eee;font-size:14px;color:#333}.vbm-success{color:#0a0;font-weight:bold}.vbm-error{color:#d00;font-weight:bold}.vbm-warn{color:#e67e22;font-weight:bold}';
   document.head.appendChild(style);
 
-  // ================= POPUP HTML =================
   const popup = document.createElement('div');
   popup.id = 'cf2-popup';
-  popup.innerHTML = `
-    <div class="popup-header" id="cf2-header">
-      <h3>🛍️ Săn Shopee All-in-One</h3>
-      <div class="header-btns">
-        <span id="ws-status" title="Trạng thái kết nối server" style="cursor:pointer;font-size:18px;margin-right:8px">🔴</span>
-        <button id="cf2-minimize" title="Thu nhỏ / Mở rộng">–</button>
-        <button id="cf2-close" title="Đóng">✕</button>
-      </div>
-    </div>
-    <div class="popup-body">
-      <div class="tab-row">
-        <button class="tab-btn active" data-tab="flash">⚡ Flash Sale</button>
-        <button class="tab-btn" data-tab="voucher">🎫 Voucher Shop</button>
-        <button class="tab-btn" data-tab="scp">🎯 SCP Deals</button>
-        <button class="tab-btn" data-tab="rcmd">🎯 Scan Gợi ý</button>
-        <button class="tab-btn" data-tab="savevoucher">💾 Lưu mã</button>
-        <button class="tab-btn" data-tab="scan">📋 Scan SP</button>
-      </div>
-
-      <!-- FLASH SALE -->
-      <div class="tab-content active" id="flash-content">
-        <div class="mode-row">
-          <label><input type="radio" name="flash-mode" value="html" checked> Quét HTML</label>
-          <label><input type="radio" name="flash-mode" value="id"> Nhập Shop ID</label>
-          <label><input type="radio" name="flash-mode" value="category"> Category (cat.xxx)</label>
-        </div>
-        <textarea id="flash-input" placeholder="Nhập danh sách Shop ID hoặc Category ID (tùy chế độ)"></textarea>
-        <label>Giảm giá ≥ <input id="flash-min" type="number" value="70" min="0" max="99">%</label><br>
-        <label>Giá gốc ≥ <input id="flash-price-min" type="number" value="0" min="0" step="10" placeholder="k">k</label><br>
-        <label>Số shop tối đa <input id="flash-maxshop" type="number" value="10" min="1" max="50"></label><br>
-        <label><input type="checkbox" id="flash-ongoing"> Chỉ đang diễn ra</label><br>
-        <button id="flash-search" class="popup-action">🔍 Tìm Flash Sale</button>
-        <button id="flash-copyall" class="copy-all" style="display:none">📋 Copy tất cả</button>
-        <button id="flash-reset" style="background:#ffc107;color:#000;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;margin:2px">🗑️ Reset đã quét</button>
-        <div id="flash-progress" class="progress"></div>
-        <div class="info-text" id="flash-info"></div>
-        <div id="flash-result"></div>
-      </div>
-
-      <!-- VOUCHER SHOP -->
-      <div class="tab-content" id="voucher-content">
-        <div class="mode-row">
-          <label><input type="radio" name="vouch-mode" value="html" checked> Quét HTML</label>
-          <label><input type="radio" name="vouch-mode" value="id"> Nhập Shop ID</label>
-        </div>
-        <textarea id="vouch-input" placeholder="Nhập danh sách Shop ID (nếu chọn Nhập Shop ID)"></textarea>
-        <div class="filter-row">
-          <label>Giảm % ≥</label><input id="vouch-fpct" type="number" placeholder="%" min="0">
-          <label>Đơn tối thiểu ≥</label><input id="vouch-fmin" type="number" placeholder="k" min="0">
-          <label>Giảm tối đa ≥</label><input id="vouch-fcap" type="number" placeholder="k" min="0">
-          <label>Số shop tối đa</label><input id="vouch-maxshop" type="number" value="5" min="1" max="30">
-        </div>
-        <button id="vouch-search" class="popup-action">🔍 Lấy voucher</button>
-        <button id="vouch-copyall" class="copy-all" style="display:none">📋 Copy tất cả</button>
-        <button id="vouch-reset" style="background:#ffc107;color:#000;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;margin:2px">🗑️ Reset đã quét</button>
-        <div id="vouch-progress" class="progress"></div>
-        <div class="info-text" id="vouch-info"></div>
-        <div id="vouch-result"></div>
-      </div>
-
-      <!-- SCP DEALS -->
-      <div class="tab-content" id="scp-content">
-        <div class="mode-row">
-          <label><input type="radio" name="scp-mode" value="html" checked> Quét HTML</label>
-          <label><input type="radio" name="scp-mode" value="id"> Nhập Shop ID</label>
-        </div>
-        <textarea id="scp-input" placeholder="Nhập danh sách Shop ID (nếu chọn Nhập Shop ID)"></textarea>
-        <label>Giảm giá ≥ <input id="scp-min" type="number" value="60" min="0" max="99">%</label>
-        <label>Số shop tối đa <input id="scp-maxshop" type="number" value="10" min="1" max="30"></label>
-        <button id="scp-search" class="popup-action">🔍 Lấy SCP Deals</button>
-        <div id="scp-progress" class="progress"></div>
-        <div id="scp-result" style="margin-top:10px"></div>
-      </div>
-
-      <!-- SCAN GỢI Ý -->
-      <div class="tab-content" id="rcmd-content">
-        <div class="mode-row">
-          <label><input type="radio" name="rcmd-mode" value="url" checked> Tự động (URL shop)</label>
-          <label><input type="radio" name="rcmd-mode" value="id"> Nhập Shop ID</label>
-        </div>
-        <textarea id="rcmd-input" placeholder="Nhập Shop ID (nếu chọn Nhập Shop ID)"></textarea>
-        <label>Giảm giá ≥ <input id="rcmd-min" type="number" value="30" min="0" max="99">%</label>
-        <label>Số sản phẩm tối đa <input id="rcmd-maxitems" type="number" value="200" min="1" max="1000"></label>
-        <button id="rcmd-search" class="popup-action">🔍 Quét sản phẩm gợi ý</button>
-        <div id="rcmd-progress" class="progress"></div>
-        <div id="rcmd-result" style="margin-top:10px"></div>
-      </div>
-
-      <!-- LƯU MÃ -->
-      <div class="tab-content" id="savevoucher-content">
-        <textarea id="sv-input" placeholder="Nhập mã voucher, mỗi mã một dòng..." style="height:80px"></textarea>
-        <button id="sv-save" class="popup-action">📥 Lưu tất cả</button>
-        <div id="sv-status" class="progress"></div>
-        <table id="sv-table" style="width:100%;border-collapse:collapse;margin-top:10px">
-          <thead><tr><th>Mã & Thông tin</th><th>Trạng thái</th><th>Thời gian</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-
-      <!-- SCAN SP -->
-      <div class="tab-content" id="scan-content">
-        <div class="scan-buttons">
-          <button id="scan-scan" class="popup-action">🔍 Quét lại</button>
-          <button id="scan-copyshop" class="popup-action" style="background:#007bff">📋 Sao chép tất cả ID Shop</button>
-          <button id="scan-reset" style="background:#ffc107;color:#000;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;margin:2px">🗑️ Xóa lịch sử</button>
-        </div>
-        <div class="tabs" style="display:flex;border-bottom:1px solid #ddd;margin-bottom:10px">
-          <button class="tab-btn active" data-subtab="scan-shopid">ID Shop</button>
-          <button class="tab-btn" data-subtab="scan-product">URL + Tiêu đề</button>
-        </div>
-        <div id="scan-shopid" class="subtab-content active" style="padding:10px 0"></div>
-        <div id="scan-product" class="subtab-content" style="padding:10px 0;display:none"></div>
-      </div>
-    </div>
-  `;
+  popup.innerHTML = '<div class="popup-header" id="cf2-header"><h3>🛍️ Săn Shopee All-in-One</h3><div class="header-btns"><span id="ws-status" style="cursor:pointer;font-size:18px;margin-right:8px">🔴</span><button id="cf2-minimize">–</button><button id="cf2-close">✕</button></div></div><div class="popup-body"><div class="tab-row"><button class="tab-btn active" data-tab="flash">⚡ Flash Sale</button><button class="tab-btn" data-tab="voucher">🎫 Voucher Shop</button><button class="tab-btn" data-tab="scp">🎯 SCP Deals</button><button class="tab-btn" data-tab="rcmd">🎯 Scan Gợi ý</button><button class="tab-btn" data-tab="savevoucher">💾 Lưu mã</button><button class="tab-btn" data-tab="scan">📋 Scan SP</button></div><div class="tab-content active" id="flash-content"><div class="mode-row"><label><input type="radio" name="flash-mode" value="html" checked> Quét HTML</label><label><input type="radio" name="flash-mode" value="id"> Nhập Shop ID</label><label><input type="radio" name="flash-mode" value="category"> Category (cat.xxx)</label></div><textarea id="flash-input" placeholder="Nhập danh sách Shop ID hoặc Category ID"></textarea><label>Giảm giá ≥ <input id="flash-min" type="number" value="70">%</label><br><label>Giá gốc ≥ <input id="flash-price-min" type="number" value="0" step="10" placeholder="k">k</label><br><label>Số shop tối đa <input id="flash-maxshop" type="number" value="10"></label><br><label><input type="checkbox" id="flash-ongoing"> Chỉ đang diễn ra</label><br><button id="flash-search" class="popup-action">🔍 Tìm Flash Sale</button><button id="flash-copyall" class="copy-all" style="display:none">📋 Copy tất cả</button><button id="flash-reset" style="background:#ffc107;color:#000;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;margin:2px">🗑️ Reset đã quét</button><div id="flash-progress" class="progress"></div><div class="info-text" id="flash-info"></div><div id="flash-result"></div></div><div class="tab-content" id="voucher-content"><div class="mode-row"><label><input type="radio" name="vouch-mode" value="html" checked> Quét HTML</label><label><input type="radio" name="vouch-mode" value="id"> Nhập Shop ID</label></div><textarea id="vouch-input" placeholder="Nhập danh sách Shop ID"></textarea><div class="filter-row"><label>Giảm % ≥</label><input id="vouch-fpct" type="number" placeholder="%"><label>Đơn tối thiểu ≥</label><input id="vouch-fmin" type="number" placeholder="k"><label>Giảm tối đa ≥</label><input id="vouch-fcap" type="number" placeholder="k"><label>Số shop tối đa</label><input id="vouch-maxshop" type="number" value="5"></div><button id="vouch-search" class="popup-action">🔍 Lấy voucher</button><button id="vouch-copyall" class="copy-all" style="display:none">📋 Copy tất cả</button><button id="vouch-reset" style="background:#ffc107;color:#000;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;margin:2px">🗑️ Reset đã quét</button><div id="vouch-progress" class="progress"></div><div class="info-text" id="vouch-info"></div><div id="vouch-result"></div></div><div class="tab-content" id="scp-content"><div class="mode-row"><label><input type="radio" name="scp-mode" value="html" checked> Quét HTML</label><label><input type="radio" name="scp-mode" value="id"> Nhập Shop ID</label></div><textarea id="scp-input" placeholder="Nhập danh sách Shop ID"></textarea><label>Giảm giá ≥ <input id="scp-min" type="number" value="60">%</label><label>Số shop tối đa <input id="scp-maxshop" type="number" value="10"></label><button id="scp-search" class="popup-action">🔍 Lấy SCP Deals</button><div id="scp-progress" class="progress"></div><div id="scp-result" style="margin-top:10px"></div></div><div class="tab-content" id="rcmd-content"><div class="mode-row"><label><input type="radio" name="rcmd-mode" value="url" checked> Tự động (URL shop)</label><label><input type="radio" name="rcmd-mode" value="id"> Nhập Shop ID</label></div><textarea id="rcmd-input" placeholder="Nhập Shop ID (nếu chọn Nhập Shop ID)"></textarea><label>Giảm giá ≥ <input id="rcmd-min" type="number" value="30">%</label><label>Số sản phẩm tối đa <input id="rcmd-maxitems" type="number" value="200"></label><button id="rcmd-search" class="popup-action">🔍 Quét sản phẩm gợi ý</button><div id="rcmd-progress" class="progress"></div><div id="rcmd-result" style="margin-top:10px"></div></div><div class="tab-content" id="savevoucher-content"><textarea id="sv-input" placeholder="Nhập mã voucher, mỗi mã một dòng..." style="height:80px"></textarea><button id="sv-save" class="popup-action">📥 Lưu tất cả</button><div id="sv-status" class="progress"></div><table id="sv-table" style="width:100%;border-collapse:collapse;margin-top:10px"><thead><tr><th>Mã & Thông tin</th><th>Trạng thái</th><th>Thời gian</th></tr></thead><tbody></tbody></table></div><div class="tab-content" id="scan-content"><div class="scan-buttons"><button id="scan-scan" class="popup-action">🔍 Quét lại</button><button id="scan-copyshop" class="popup-action" style="background:#007bff">📋 Sao chép tất cả ID Shop</button><button id="scan-reset" style="background:#ffc107;color:#000;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;margin:2px">🗑️ Xóa lịch sử</button></div><div style="display:flex;border-bottom:1px solid #ddd;margin-bottom:10px"><button class="tab-btn active" data-subtab="scan-shopid">ID Shop</button><button class="tab-btn" data-subtab="scan-product">URL + Tiêu đề</button></div><div id="scan-shopid" class="subtab-content active" style="padding:10px 0"></div><div id="scan-product" class="subtab-content" style="padding:10px 0;display:none"></div></div></div>';
   document.body.appendChild(popup);
 
-  // ================= DRAG & DROP =================
+  // Drag & Drop
   let isDragging = false, startX, startY, initialX, initialY;
   const header = document.getElementById('cf2-header');
   header.addEventListener('mousedown', (e) => {
@@ -190,7 +40,7 @@
   });
   document.getElementById('cf2-close').addEventListener('click', () => popup.remove());
 
-  // ================= TAB HANDLERS =================
+  // Tab navigation
   document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
     btn.addEventListener('click', function() {
       document.querySelectorAll('.tab-btn[data-tab]').forEach(b => b.classList.remove('active'));
@@ -212,7 +62,6 @@
     });
   });
 
-  // ================= HELPER FUNCTIONS =================
   const $ = id => document.getElementById(id);
   function getCsrfToken() {
     const m = document.cookie.match(/csrftoken=([^;]+)/);
@@ -230,7 +79,7 @@
     return [...ids];
   }
 
-  // ================= SCAN SP =================
+    // ================= SCAN SP =================
   const SCAN_KEY = 'cf2_scanned_shops_list';
   function scanGetScanned() { try { return JSON.parse(localStorage.getItem(SCAN_KEY)) || []; } catch (e) { return []; } }
   function scanAddScanned(ids) { const cur = scanGetScanned(); const upd = [...new Set([...cur, ...ids])]; localStorage.setItem(SCAN_KEY, JSON.stringify(upd)); return upd; }
@@ -309,6 +158,7 @@
       return modelIds.map(mid => map[mid] || ('Model ' + mid)).join(', ');
     } catch (e) { return null; }
   }
+
   function flashRender() {
     const d = $('flash-result');
     d.innerHTML = '';
@@ -335,6 +185,7 @@
       };
     });
   }
+
   $('flash-copyall').onclick = () => {
     const now = Math.floor(Date.now() / 1000);
     const all = flashItems.map(i => {
@@ -350,7 +201,9 @@
     });
     sendResultToServer('⚡ Flash Sale:\n' + all);
   };
+
   $('flash-reset').onclick = () => { if (confirm('Xóa lịch sử quét Flash Sale?')) { flashReset(); flashUpdateInfo(); } };
+
   async function fetchFlashSale(shopId) {
     const ctrl = flashAbort;
     const r = await fetch('https://shopee.vn/api/v4/shop/get_shop_flash_sale_items?shopid=' + shopId, { headers: { 'x-requested-with': 'XMLHttpRequest' }, credentials: 'include', signal: ctrl ? ctrl.signal : undefined });
@@ -367,6 +220,7 @@
     }
     return items;
   }
+
   async function processBatchFlash(shopIds, min, ongoing, now, prog, minPriceK) {
     let collected = [];
     let i = 0;
@@ -401,6 +255,7 @@
     }
     return collected;
   }
+
   $('flash-search').onclick = async () => {
     const mode = document.querySelector('input[name="flash-mode"]:checked').value;
     const input = $('flash-input').value.trim();
@@ -474,7 +329,7 @@
     flashRender();
   };
 
-  // ================= VOUCHER SHOP =================
+    // ================= VOUCHER SHOP =================
   const VOUCH_KEY = 'vcat_scanned_shops';
   let vouchVouchers = [], vouchAbort = null;
   function vouchGetScanned() { try { return JSON.parse(localStorage.getItem(VOUCH_KEY)) || []; } catch (e) { return []; } }
@@ -753,18 +608,11 @@
       ws.send(`🎯 SCP Deals: ${scpDeals.length} deals, ${scpVouchers.length} vouchers`);
     }
   };
-
-  // ================= SCAN GỢI Ý (RCMD ITEMS) - ĐÃ SỬA HOÀN TOÀN =================
+  // ================= SCAN GỢI Ý (RCMD) =================
   function getShopIdFromUrl() {
     const m = location.href.match(/shop\/(\d+)/);
     return m ? m[1] : null;
   }
-
-  // Định nghĩa lại fmtK cho riêng tab này để tránh phụ thuộc
-  const fmtKLocal = n => {
-    let k = n / 1e8;
-    return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + 'k';
-  };
 
   async function fetchRcmdItemsPage(shopId, offset, limit = 48) {
     const body = {
@@ -776,7 +624,6 @@
       item_card_use_scene: "rfy_langding_page",
       is_insert_new_arrival: false
     };
-    console.log('fetchRcmdItemsPage gọi với offset', offset);
     const res = await fetch('https://shopee.vn/api/v4/shop/rcmd_items', {
       method: 'POST',
       headers: {
@@ -789,10 +636,8 @@
       credentials: 'include',
       body: JSON.stringify(body)
     });
-    console.log('Response status:', res.status);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const json = await res.json();
-    console.log('Response data:', json);
     if (json.error !== 0) throw new Error(json.error_msg || 'API error');
     return json.data;
   }
@@ -803,20 +648,17 @@
     const limit = 48;
     while (true) {
       prog.innerHTML = `Đang tải trang offset=${offset}...`;
-      console.log('Bắt đầu tải offset', offset);
       let data;
       try {
         data = await fetchRcmdItemsPage(shopId, offset, limit);
       } catch (e) {
         prog.innerHTML = `<span class="warning">Lỗi khi tải dữ liệu: ${e.message}</span>`;
-        console.error(e);
         return [];
       }
 
-      const cards = data?.centralize_item_card?.item_cards || [];
-      console.log('Số cards nhận được:', cards.length);
+      const cards = (data.centralize_item_card && data.centralize_item_card.item_cards) ? data.centralize_item_card.item_cards : [];
       if (cards.length === 0) break;
-      allItems.push(...cards);
+      allItems = allItems.concat(cards);
 
       if (data.no_more === true) break;
       if (allItems.length >= maxItems) break;
@@ -829,10 +671,9 @@
     if (allItems.length > maxItems) allItems = allItems.slice(0, maxItems);
 
     const filtered = allItems.filter(card => {
-      const discount = card.item_card_display_price?.discount || 0;
+      const discount = (card.item_card_display_price && card.item_card_display_price.discount) || 0;
       return discount >= minDiscount;
     });
-    console.log('Tổng items:', allItems.length, 'Sau lọc:', filtered.length);
     return filtered;
   }
 
@@ -846,7 +687,7 @@
     let html = '';
     items.forEach(card => {
       const dp = card.item_card_display_price || {};
-      const name = card.item_card_displayed_asset?.name || card.name || 'Không tên';
+      const name = (card.item_card_displayed_asset && card.item_card_displayed_asset.name) || card.name || 'Không tên';
       const shortName = name.length > 40 ? name.substring(0, 40) + '...' : name;
       const discount = dp.discount || 0;
       const price = dp.price || 0;
@@ -857,41 +698,26 @@
         priceText = `<s>${(originalPrice/100000).toLocaleString('vi-VN')}đ</s> ${priceText}`;
       }
       let voucherText = '';
-      const pv = dp.recommended_platform_voucher_info;
-      const sv = dp.recommended_shop_voucher_info;
-      if (pv) {
-        const vDisc = pv.voucher_discount ? fmtKLocal(pv.voucher_discount) : '0k';
-        const vMin = pv.min_spend ? fmtKLocal(pv.min_spend) : '0đ';
-        voucherText += ` [Platform: ${vDisc}/${vMin}]`;
+      if (dp.recommended_platform_voucher_info) {
+        const v = dp.recommended_platform_voucher_info;
+        voucherText += ` [Platform: ${v.voucher_discount ? Math.round(v.voucher_discount/1e8)+'k' : '0k'}/${v.min_spend ? Math.round(v.min_spend/1e8)+'k' : '0đ'}]`;
       }
-      if (sv) {
-        const vDisc = sv.voucher_discount ? fmtKLocal(sv.voucher_discount) : '0k';
-        const vMin = sv.min_spend ? fmtKLocal(sv.min_spend) : '0đ';
-        voucherText += ` [Shop: ${vDisc}/${vMin}]`;
-      }
-      html += `<div class="result-item">
-        <span class="link-text">
-          -${discount}% ${shortName}: <a href="${link}" target="_blank">${link}</a> ${priceText}${voucherText}
-        </span>
-      </div>`;
+      html += `<div class="result-item"><span class="link-text">-${discount}% ${shortName}: <a href="${link}" target="_blank">${link}</a> ${priceText}${voucherText}</span></div>`;
     });
     d.innerHTML = html;
   }
 
-  $('rcmd-search').onclick = async () => {
-    console.log('Nút rcmd-search được nhấn');
+  $('rcmd-search').onclick = async function() {
     const mode = document.querySelector('input[name="rcmd-mode"]:checked').value;
     let shopId;
     if (mode === 'url') {
       shopId = getShopIdFromUrl();
-      console.log('ShopId từ URL:', shopId);
       if (!shopId) {
         $('rcmd-progress').innerHTML = '<span class="warning">Không tìm thấy shop ID trong URL. Hãy vào trang shop.</span>';
         return;
       }
     } else {
       shopId = $('rcmd-input').value.trim();
-      console.log('ShopId nhập tay:', shopId);
       if (!shopId || !/^\d+$/.test(shopId)) {
         $('rcmd-progress').innerHTML = '<span class="warning">Shop ID không hợp lệ.</span>';
         return;
@@ -905,12 +731,8 @@
       const items = await scanAllRcmdItems(shopId, maxItems, minDiscount, prog);
       prog.innerHTML = `Đã lấy ${items.length} sản phẩm có discount ≥ ${minDiscount}%.`;
       renderRcmdResult(items);
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(`🎯 Scan Gợi ý shop ${shopId}: ${items.length} sản phẩm`);
-      }
     } catch (e) {
       prog.innerHTML = `<span class="warning">Lỗi: ${e.message}</span>`;
-      console.error(e);
     }
   };
 
@@ -1011,7 +833,7 @@
     $('sv-status').textContent = '✅ Hoàn thành!';
   };
 
-  // ================= WEBSOCKET =================
+    // ================= WEBSOCKET =================
   let ws = null;
   let wsReconnectTimer = null;
 
@@ -1081,3 +903,5 @@
   flashUpdateInfo();
   vouchUpdateInfo();
 })();
+  
+  

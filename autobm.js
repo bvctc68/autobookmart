@@ -753,26 +753,46 @@
     }
   };
 
-  // ================= LƯU MÃ VOUCHER (TÍCH HỢP BOOKMARK 2) =================
+    // ================= LƯU MÃ VOUCHER (TÍCH HỢP BOOKMARK 2) =================
   function formatTimeParts(ts) {
     const d = new Date(ts * 1000);
     return { hour: d.getHours(), day: d.getDate(), month: d.getMonth() + 1 };
   }
-  function formatK2(amount) { return Math.round(amount / 1e8); }
+  function formatK2(amount) { return Math.round(amount / 1e8); } // Đổi từ 1/100000000 sang 1e8 cho dễ đọc
 
   function addSaveRow(code, data) {
     const tbody = document.querySelector('#sv-table tbody');
     const tr = document.createElement('tr');
-
     const tdInfo = document.createElement('td');
-    if (data && data.voucher) {
+    const tdStatus = document.createElement('td');
+    const tdTime = document.createElement('td');
+
+    // Trường hợp không có data (lỗi mạng)
+    if (!data) {
+      tdInfo.textContent = `🔸 ${code}`;
+      tdStatus.className = 'vbm-error'; tdStatus.textContent = '❌ Lỗi mạng';
+      tdTime.textContent = '—';
+    }
+    // Trường hợp API trả về lỗi (error != 0)
+    else if (data.error && data.error !== 0) {
+      tdInfo.textContent = `🔸 ${code}`;
+      tdStatus.className = 'vbm-error'; tdStatus.textContent = `❌ ${data.error_msg || 'Lỗi API'}`;
+      tdTime.textContent = '—';
+    }
+    // Trường hợp thành công, có voucher
+    else if (data.voucher) {
       const v = data.voucher;
       const start = formatTimeParts(v.start_time || 0);
+      const end = formatTimeParts(v.end_time || 0);
+
+      // Tính giảm giá hiển thị
       const discountText = v.reward_percentage > 0
-        ? `${v.reward_percentage}% max ${formatK2(v.reward_cap||0)}k`
-        : `${formatK2(v.reward_value||0)}k`;
-      const minSpend = `${formatK2(v.min_spend||0)}k`;
+        ? `${v.reward_percentage}% max ${formatK2(v.reward_cap || 0)}k`
+        : `${formatK2(v.reward_value || 0)}k`;
+      const minSpend = `${formatK2(v.min_spend || 0)}k`;
       const link = `https://shopee.vn/search?promotionId=${v.promotionid}&signature=${v.signature}&voucherCode=${code}`;
+
+      // Cột thông tin
       tdInfo.innerHTML = `- ${start.hour}h: ${code} giảm ${discountText}/${minSpend} áp list: <a href="${link}" target="_blank">link</a>`;
       const copyBtn = document.createElement('button');
       copyBtn.className = 'copy-btn';
@@ -785,30 +805,46 @@
         });
       };
       tdInfo.appendChild(copyBtn);
-    } else {
-      tdInfo.textContent = `🔸 ${code}`;
-    }
 
-    const tdStatus = document.createElement('td');
-    if (!data) {
-      tdStatus.className = 'vbm-error'; tdStatus.textContent = '❌ Lỗi mạng';
-    } else if (data.error !== 0) {
-      tdStatus.className = 'vbm-error'; tdStatus.textContent = `❌ ${data.error_msg || data.error}`;
-    } else {
-      const msgCode = data.invalid_message_code;
-      if (msgCode === 0) { tdStatus.className = 'vbm-success'; tdStatus.textContent = '✅ Đã lưu'; }
-      else if (msgCode === 4) { tdStatus.className = 'vbm-error'; tdStatus.textContent = '❌ Hết lượt'; }
-      else if (msgCode === 14) { tdStatus.className = 'vbm-warn'; tdStatus.textContent = '⚠️ Đã lưu trước'; }
-      else { tdStatus.className = 'vbm-warn'; tdStatus.textContent = `⚠️ Mã ${msgCode}`; }
-    }
+      // Cột trạng thái
+      const msgCode = data.invalid_message_code; // Lấy từ data, không phải từ voucher
+      if (msgCode === 0) {
+        tdStatus.className = 'vbm-success';
+        tdStatus.textContent = '✅ Đã lưu';
+      } else if (msgCode === 4) {
+        tdStatus.className = 'vbm-error';
+        tdStatus.textContent = '❌ Hết lượt';
+      } else if (msgCode === 14) {
+        tdStatus.className = 'vbm-warn';
+        tdStatus.textContent = '⚠️ Đã lưu trước';
+      } else if (msgCode !== null && msgCode !== undefined) {
+        tdStatus.className = 'vbm-warn';
+        tdStatus.textContent = `⚠️ Trạng thái (mã ${msgCode})`;
+      } else {
+        tdStatus.className = 'vbm-warn';
+        tdStatus.textContent = '⚠️ Không xác định';
+      }
 
-    const tdTime = document.createElement('td');
-    if (data && data.voucher) {
-      const v = data.voucher;
-      const start = formatTimeParts(v.start_time || 0);
-      const end = formatTimeParts(v.end_time || 0);
+      // Cột thời gian
       tdTime.textContent = `${start.hour}h - ${start.day}/${start.month} | ${end.hour}h - ${end.day}/${end.month}`;
-    } else {
+    }
+    // Trường hợp không có voucher nhưng có invalid_message_code
+    else {
+      tdInfo.textContent = `🔸 ${code}`;
+      const msgCode = data.invalid_message_code;
+      if (msgCode === 4) {
+        tdStatus.className = 'vbm-error';
+        tdStatus.textContent = '❌ Hết lượt';
+      } else if (msgCode === 14) {
+        tdStatus.className = 'vbm-warn';
+        tdStatus.textContent = '⚠️ Đã lưu trước';
+      } else if (msgCode) {
+        tdStatus.className = 'vbm-warn';
+        tdStatus.textContent = `⚠️ Lỗi (mã ${msgCode})`;
+      } else {
+        tdStatus.className = 'vbm-warn';
+        tdStatus.textContent = '⚠️ Không thể lưu';
+      }
       tdTime.textContent = '—';
     }
 
@@ -823,6 +859,7 @@
     if (!codes.length) return;
     $('sv-save').disabled = true;
     $('sv-status').textContent = `Đang xử lý ${codes.length} mã...`;
+
     for (let i = 0; i < codes.length; i++) {
       const code = codes[i];
       $('sv-status').textContent = `Đang xử lý ${i+1}/${codes.length}: ${code}...`;
@@ -833,16 +870,23 @@
           body: JSON.stringify({ voucher_code: code })
         });
         const json = await res.json();
-        addSaveRow(code, json);
+        if (json.error !== 0) {
+          // API lỗi (error != 0)
+          addSaveRow(code, { error: json.error, error_msg: json.error_msg });
+        } else {
+          // Thành công, truyền json.data (chứa voucher, invalid_message_code...)
+          addSaveRow(code, json.data || {});
+        }
       } catch (e) {
-        addSaveRow(code, null);
+        addSaveRow(code, null); // Lỗi mạng
       }
-      await new Promise(r => setTimeout(r, 400));
+      await new Promise(r => setTimeout(r, 400)); // Giữ delay 400ms
     }
+
     $('sv-save').disabled = false;
     $('sv-status').textContent = '✅ Hoàn thành!';
   };
-
+  
   // ================= WEBSOCKET =================
   let ws = null;
   let wsReconnectTimer = null;

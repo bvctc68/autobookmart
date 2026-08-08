@@ -757,13 +757,10 @@
 // ================= SCAN GỢI Ý (RCMD ITEMS) =================
 function getShopIdFromUrl() {
     const href = location.href;
-    // Pattern 1: /shop/461493581/... (trang shop, recommendation-landing)
     let m = href.match(/\/shop\/(\d+)/);
     if (m) return m[1];
-    // Pattern 2: i.461493581.18884299424 (URL sản phẩm rút gọn - phổ biến nhất)
     m = href.match(/i\.(\d+)\.(\d+)/);
     if (m) return m[1];
-    // Pattern 3: /product/461493581/18884299424
     m = href.match(/\/product\/(\d+)\/(\d+)/);
     if (m) return m[1];
     return null;
@@ -774,29 +771,33 @@ const fmtKLocal = n => {
     return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + 'k';
 };
 
+// ✅ FIX: Sửa tham số API cho đúng với response thực tế
 async function fetchRcmdItemsPage(shopId, offset, limit = 48) {
+    const csrf = getCsrfToken();
     const res = await fetch('https://shopee.vn/api/v4/shop/rcmd_items', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'x-requested-with': 'XMLHttpRequest',
             'x-api-source': 'pc',
-            'x-csrftoken': getCsrfToken(),
+            'x-csrftoken': csrf,
             'Referer': `https://shopee.vn/shop/${shopId}/recommendation-landing?upstream=pdp`
         },
         credentials: 'include',
         body: JSON.stringify({
-            bundle: 'shop_page_rfy',
+            bundle: 'shop_page_rfy',                  // giữ nguyên bundle bạn đã thấy hoạt động
             shop_id: parseInt(shopId),
             limit,
             offset,
-            upstream: 'pdp',
-            item_card_use_scene: 'rfy_langding_page',
+            upstream: 'pdp',                          // upstream từ trang sản phẩm hoặc recommendation
+            item_card_use_scene: 'rfy_landing_page',  // ✅ sửa lỗi chính tả "langding" → "landing"
             is_insert_new_arrival: false
         })
     });
+    console.log(`[RCMD] Fetch offset=${offset} status=${res.status}`);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const json = await res.json();
+    console.log(`[RCMD] Response offset=${offset}:`, json);
     if (json.error !== 0) throw new Error(json.error_msg || 'API error ' + json.error);
     return json.data;
 }
@@ -817,40 +818,58 @@ async function scanAllRcmdItems(shopId, maxItems, minDiscount, prog) {
             data = await fetchRcmdItemsPage(shopId, offset, limit);
         } catch (e) {
             hasError = true;
-            // ✅ FIX: break thay vì return [] để giữ lại data đã lấy được
             prog.innerHTML = allItems.length > 0
                 ? `⚠️ Lỗi ở offset=${offset}: ${e.message}. Giữ ${allItems.length} SP đã lấy.`
                 : `<span class="warning">❌ Lỗi gọi API: ${e.message}</span>`;
             break;
         }
 
-        // ✅ FIX: Lấy total từ response để biết khi nào dừng
-        if (totalFromApi === null && data.total > 0) {
+        // Lấy total từ response nếu có
+        if (totalFromApi === null && data.total && data.total > 0) {
             totalFromApi = data.total;
         }
 
-        const cards = data?.centralize_item_card?.item_cards || [];
-        if (!cards.length) break;
+        const cards = data?.centralize_item_card?.item_cards;
+        if (!cards || !cards.length) {
+            console.log('[RCMD] Không còn sản phẩm, dừng.');
+            break;
+        }
 
         allItems.push(...cards);
+        console.log(`[RCMD] Đã lấy ${cards.length} SP, tổng: ${allItems.length}`);
 
-        // Điều kiện dừng theo thứ tự ưu tiên
-        if (data.no_more === true) break;
-        if (totalFromApi !== null && allItems.length >= totalFromApi) break;
-        if (allItems.length >= maxItems) break;
-        if (cards.length < limit) break; // trang cuối lẻ
+        // Điều kiện dừng
+        if (data.no_more === true) {
+            console.log('[RCMD] no_more = true');
+            break;
+        }
+        if (totalFromApi !== null && allItems.length >= totalFromApi) {
+            console.log(`[RCMD] Đã lấy đủ ${totalFromApi} SP`);
+            break;
+        }
+        if (allItems.length >= maxItems) {
+            console.log('[RCMD] Đạt giới hạn maxItems');
+            break;
+        }
+        if (cards.length < limit) {
+            console.log('[RCMD] Số sản phẩm trang cuối < limit, dừng');
+            break;
+        }
 
         offset += limit;
+        // delay ngẫu nhiên tránh bị chặn
         await new Promise(r => setTimeout(r, 600 + Math.random() * 900));
     }
 
+    // Cắt bớt nếu vượt maxItems
     if (allItems.length > maxItems) allItems = allItems.slice(0, maxItems);
 
+    // Lọc theo discount
     const filtered = allItems.filter(c => (c.item_card_display_price?.discount || 0) >= minDiscount);
+    console.log(`[RCMD] Lọc còn ${filtered.length} SP với discount >= ${minDiscount}%`);
     return { items: filtered, hasError };
 }
 
-// Helper dùng chung cho cả text thuần và HTML
 function buildRcmdLine(card, isHtml) {
     const dp = card.item_card_display_price || {};
     const name = card.item_card_displayed_asset?.name || card.name || 'Không tên';
@@ -905,7 +924,6 @@ function renderRcmdResult(items) {
         return;
     }
 
-    // Sắp xếp giảm dần theo % giảm giá
     items.sort((a, b) => (b.item_card_display_price?.discount || 0) - (a.item_card_display_price?.discount || 0));
 
     let html = `<button id="rcmd-copyall-btn" class="copy-all" style="margin-bottom:8px">📋 Copy tất cả (${items.length})</button>`;
@@ -914,7 +932,6 @@ function renderRcmdResult(items) {
     });
     d.innerHTML = html;
 
-    // Bind sau khi DOM đã render
     document.getElementById('rcmd-copyall-btn').addEventListener('click', function () {
         const text = items.map(c => buildRcmdLine(c, false)).join('\n');
         navigator.clipboard.writeText(text).then(() => {
@@ -952,10 +969,9 @@ $('rcmd-search').onclick = async () => {
 
     const { items, hasError } = await scanAllRcmdItems(shopId, maxItems, minDiscount, prog);
 
-    // Chỉ cập nhật progress nếu không có lỗi hoàn toàn (có items thì luôn hiện kết quả)
-    if (items.length > 0 || !hasError) {
-        prog.innerHTML = `✅ Xong! <b>${items.length}</b> SP có discount ≥ ${minDiscount}% (shop: ${shopId})`;
-    }
+    prog.innerHTML = hasError && items.length === 0
+        ? '<span class="warning">❌ Không lấy được dữ liệu, kiểm tra Console (F12) để biết chi tiết.</span>'
+        : `✅ Xong! <b>${items.length}</b> SP có discount ≥ ${minDiscount}% (shop: ${shopId})`;
 
     renderRcmdResult(items);
     sendResultToServer(`🎯 Scan Gợi ý shop ${shopId}: ${items.length} SP ≥${minDiscount}%`);

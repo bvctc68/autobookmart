@@ -19,14 +19,17 @@ wss.on('connection', (ws) => {
   console.log('Client connected');
   clientWs = ws;
 
+  ws.on('message', (data) => {
+    const message = data.toString();
+    // Bỏ qua ping
+    if (message === 'ping') return;
+    console.log('Received:', message.substring(0, 100) + '...');
+    bot.sendMessage(CHAT_ID, message).catch(err => console.error('Send error:', err));
+  });
+
   ws.on('close', () => {
     console.log('Client disconnected');
     clientWs = null;
-  });
-
-  ws.on('message', (data) => {
-    const message = data.toString();
-    bot.sendMessage(CHAT_ID, message).catch(console.error);
   });
 });
 

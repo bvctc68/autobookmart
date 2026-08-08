@@ -755,6 +755,7 @@
   };
 
 // ================= SCAN GỢI Ý (RCMD ITEMS) =================
+// ================= SCAN GỢI Ý (RCMD ITEMS) - DEBUG VERSION =================
 function getShopIdFromUrl() {
     const href = location.href;
     let m = href.match(/\/shop\/(\d+)/);
@@ -771,9 +772,18 @@ const fmtKLocal = n => {
     return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + 'k';
 };
 
-// ✅ FIX: Sửa tham số API cho đúng với response thực tế
 async function fetchRcmdItemsPage(shopId, offset, limit = 48) {
     const csrf = getCsrfToken();
+    const payload = {
+        bundle: 'shop_page_rfy',
+        shop_id: parseInt(shopId),
+        limit,
+        offset,
+        upstream: 'pdp',
+        item_card_use_scene: 'rfy_landing_page',   // ✅ Đã sửa chính tả
+        is_insert_new_arrival: false
+    };
+    console.log(`[RCMD] Gửi request offset=${offset}`, payload);
     const res = await fetch('https://shopee.vn/api/v4/shop/rcmd_items', {
         method: 'POST',
         headers: {
@@ -784,20 +794,12 @@ async function fetchRcmdItemsPage(shopId, offset, limit = 48) {
             'Referer': `https://shopee.vn/shop/${shopId}/recommendation-landing?upstream=pdp`
         },
         credentials: 'include',
-        body: JSON.stringify({
-            bundle: 'shop_page_rfy',                  // giữ nguyên bundle bạn đã thấy hoạt động
-            shop_id: parseInt(shopId),
-            limit,
-            offset,
-            upstream: 'pdp',                          // upstream từ trang sản phẩm hoặc recommendation
-            item_card_use_scene: 'rfy_landing_page',  // ✅ sửa lỗi chính tả "langding" → "landing"
-            is_insert_new_arrival: false
-        })
+        body: JSON.stringify(payload)
     });
-    console.log(`[RCMD] Fetch offset=${offset} status=${res.status}`);
+    console.log(`[RCMD] Response status=${res.status}`);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const json = await res.json();
-    console.log(`[RCMD] Response offset=${offset}:`, json);
+    console.log(`[RCMD] Response data offset=${offset}:`, json);
     if (json.error !== 0) throw new Error(json.error_msg || 'API error ' + json.error);
     return json.data;
 }
@@ -821,22 +823,31 @@ async function scanAllRcmdItems(shopId, maxItems, minDiscount, prog) {
             prog.innerHTML = allItems.length > 0
                 ? `⚠️ Lỗi ở offset=${offset}: ${e.message}. Giữ ${allItems.length} SP đã lấy.`
                 : `<span class="warning">❌ Lỗi gọi API: ${e.message}</span>`;
+            console.error(e);
             break;
         }
 
-        // Lấy total từ response nếu có
+        // Lấy total (nếu có)
         if (totalFromApi === null && data.total && data.total > 0) {
             totalFromApi = data.total;
+            console.log(`[RCMD] Total from API = ${totalFromApi}`);
         }
 
-        const cards = data?.centralize_item_card?.item_cards;
-        if (!cards || !cards.length) {
+        // Lấy item_cards – hỗ trợ cả trường hợp không có centralize_item_card
+        let cards = [];
+        if (data.centralize_item_card && Array.isArray(data.centralize_item_card.item_cards)) {
+            cards = data.centralize_item_card.item_cards;
+        } else if (Array.isArray(data.item_cards)) {
+            cards = data.item_cards;
+        }
+        console.log(`[RCMD] Trang offset=${offset} có ${cards.length} item_cards`);
+
+        if (cards.length === 0) {
             console.log('[RCMD] Không còn sản phẩm, dừng.');
             break;
         }
 
         allItems.push(...cards);
-        console.log(`[RCMD] Đã lấy ${cards.length} SP, tổng: ${allItems.length}`);
 
         // Điều kiện dừng
         if (data.no_more === true) {
@@ -857,16 +868,20 @@ async function scanAllRcmdItems(shopId, maxItems, minDiscount, prog) {
         }
 
         offset += limit;
-        // delay ngẫu nhiên tránh bị chặn
         await new Promise(r => setTimeout(r, 600 + Math.random() * 900));
     }
 
-    // Cắt bớt nếu vượt maxItems
+    // Cắt bớt
     if (allItems.length > maxItems) allItems = allItems.slice(0, maxItems);
+    console.log(`[RCMD] Tổng sản phẩm thô: ${allItems.length}`);
 
-    // Lọc theo discount
-    const filtered = allItems.filter(c => (c.item_card_display_price?.discount || 0) >= minDiscount);
-    console.log(`[RCMD] Lọc còn ${filtered.length} SP với discount >= ${minDiscount}%`);
+    // Lọc theo discount và in ra để debug
+    const filtered = allItems.filter(c => {
+        const discount = c.item_card_display_price?.discount || 0;
+        console.log(` - item ${c.itemid}: discount=${discount}%`);
+        return discount >= minDiscount;
+    });
+    console.log(`[RCMD] Sau lọc (≥${minDiscount}%): ${filtered.length} SP`);
     return { items: filtered, hasError };
 }
 

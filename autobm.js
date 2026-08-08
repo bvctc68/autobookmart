@@ -1,11 +1,10 @@
 (() => {
   // ================= CẤU HÌNH =================
-  const SERVER_WS_URL = 'wss://autobookmart.onrender.com'; // THAY BẰNG URL THỰC TẾ
+  const SERVER_WS_URL = 'wss://autobookmart.onrender.com'; // THAY URL THỰC TẾ
 
   // ================= CSS =================
   const style = document.createElement('style');
   style.textContent = `
-    /* Popup chính */
     #cf2-popup{position:fixed;top:20px;left:50%;transform:translateX(-50%);width:900px;max-height:95vh;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.3);border-radius:12px;z-index:9999;font-family:Arial;display:flex;flex-direction:column;resize:both;overflow:auto}
     #cf2-popup .popup-header{cursor:move;display:flex;justify-content:space-between;align-items:center;padding:10px 15px;background:#f5f5f5;border-radius:12px 12px 0 0;user-select:none}
     #cf2-popup .popup-header h3{margin:0;font-size:16px;flex:1}
@@ -36,7 +35,6 @@
     #cf2-popup th,#cf2-popup td{border:1px solid #ddd;padding:8px;text-align:left}
     #cf2-popup .scan-buttons{display:flex;gap:10px;margin-bottom:10px}
     #cf2-popup .vouch-date-header{font-weight:bold;margin-top:12px;padding:4px 0;border-bottom:1px solid #eee;font-size:14px;color:#333}
-    /* Thêm class trạng thái cho tab lưu mã */
     .vbm-success{color:#0a0;font-weight:bold}
     .vbm-error{color:#d00;font-weight:bold}
     .vbm-warn{color:#e67e22;font-weight:bold}
@@ -120,21 +118,21 @@
         <div id="scp-result" style="margin-top:10px"></div>
       </div>
 
-      <!-- SCAN GỢI Ý (Tích hợp API rcmd_items) -->
+      <!-- SCAN GỢI Ý -->
       <div class="tab-content" id="rcmd-content">
         <div class="mode-row">
           <label><input type="radio" name="rcmd-mode" value="url" checked> Tự động (URL shop)</label>
           <label><input type="radio" name="rcmd-mode" value="id"> Nhập Shop ID</label>
         </div>
         <textarea id="rcmd-input" placeholder="Nhập Shop ID (nếu chọn Nhập Shop ID)"></textarea>
-        <label>Giảm giá ≥ <input id="rcmd-min" type="number" value="50" min="0" max="99">%</label>
+        <label>Giảm giá ≥ <input id="rcmd-min" type="number" value="30" min="0" max="99">%</label>
         <label>Số sản phẩm tối đa <input id="rcmd-maxitems" type="number" value="200" min="1" max="1000"></label>
         <button id="rcmd-search" class="popup-action">🔍 Quét sản phẩm gợi ý</button>
         <div id="rcmd-progress" class="progress"></div>
         <div id="rcmd-result" style="margin-top:10px"></div>
       </div>
 
-      <!-- LƯU MÃ VOUCHER -->
+      <!-- LƯU MÃ -->
       <div class="tab-content" id="savevoucher-content">
         <textarea id="sv-input" placeholder="Nhập mã voucher, mỗi mã một dòng..." style="height:80px"></textarea>
         <button id="sv-save" class="popup-action">📥 Lưu tất cả</button>
@@ -232,12 +230,11 @@
     return [...ids];
   }
 
-  // ================= SCAN SP (LƯU LỊCH SỬ) =================
+  // ================= SCAN SP =================
   const SCAN_KEY = 'cf2_scanned_shops_list';
   function scanGetScanned() { try { return JSON.parse(localStorage.getItem(SCAN_KEY)) || []; } catch (e) { return []; } }
   function scanAddScanned(ids) { const cur = scanGetScanned(); const upd = [...new Set([...cur, ...ids])]; localStorage.setItem(SCAN_KEY, JSON.stringify(upd)); return upd; }
   function scanReset() { localStorage.removeItem(SCAN_KEY); }
-
   function scanPage() {
     const shopDiv = $('scan-shopid'), prodDiv = $('scan-product');
     const products = [];
@@ -312,7 +309,6 @@
       return modelIds.map(mid => map[mid] || ('Model ' + mid)).join(', ');
     } catch (e) { return null; }
   }
-
   function flashRender() {
     const d = $('flash-result');
     d.innerHTML = '';
@@ -339,7 +335,6 @@
       };
     });
   }
-
   $('flash-copyall').onclick = () => {
     const now = Math.floor(Date.now() / 1000);
     const all = flashItems.map(i => {
@@ -355,9 +350,7 @@
     });
     sendResultToServer('⚡ Flash Sale:\n' + all);
   };
-
   $('flash-reset').onclick = () => { if (confirm('Xóa lịch sử quét Flash Sale?')) { flashReset(); flashUpdateInfo(); } };
-
   async function fetchFlashSale(shopId) {
     const ctrl = flashAbort;
     const r = await fetch('https://shopee.vn/api/v4/shop/get_shop_flash_sale_items?shopid=' + shopId, { headers: { 'x-requested-with': 'XMLHttpRequest' }, credentials: 'include', signal: ctrl ? ctrl.signal : undefined });
@@ -374,7 +367,6 @@
     }
     return items;
   }
-
   async function processBatchFlash(shopIds, min, ongoing, now, prog, minPriceK) {
     let collected = [];
     let i = 0;
@@ -396,11 +388,8 @@
           if (ongoing) filtered = filtered.filter(it => it.start_time <= now && it.end_time >= now);
           collected.push(...filtered);
         } catch (e) {
-          if (e.message === 'BLOCKED') {
-            prog.innerHTML = '<br><span class="warning">🚫 Bị chặn (403/429). Dừng lại.</span>';
-            i = shopIds.length;
-            break;
-          } else { prog.innerHTML += '<br><span style="color:red">Lỗi shop ' + sid + ': ' + e.message + '</span>'; }
+          if (e.message === 'BLOCKED') { prog.innerHTML = '<br><span class="warning">🚫 Bị chặn (403/429). Dừng lại.</span>'; i = shopIds.length; break; }
+          else { prog.innerHTML += '<br><span style="color:red">Lỗi shop ' + sid + ': ' + e.message + '</span>'; }
         }
       }
       i += batch.length;
@@ -412,7 +401,6 @@
     }
     return collected;
   }
-
   $('flash-search').onclick = async () => {
     const mode = document.querySelector('input[name="flash-mode"]:checked').value;
     const input = $('flash-input').value.trim();
@@ -766,11 +754,17 @@
     }
   };
 
-  // ================= SCAN GỢI Ý (RCMD ITEMS) - ĐÃ SỬA =================
+  // ================= SCAN GỢI Ý (RCMD ITEMS) - ĐÃ SỬA HOÀN TOÀN =================
   function getShopIdFromUrl() {
     const m = location.href.match(/shop\/(\d+)/);
     return m ? m[1] : null;
   }
+
+  // Định nghĩa lại fmtK cho riêng tab này để tránh phụ thuộc
+  const fmtKLocal = n => {
+    let k = n / 1e8;
+    return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + 'k';
+  };
 
   async function fetchRcmdItemsPage(shopId, offset, limit = 48) {
     const body = {
@@ -782,6 +776,7 @@
       item_card_use_scene: "rfy_langding_page",
       is_insert_new_arrival: false
     };
+    console.log('fetchRcmdItemsPage gọi với offset', offset);
     const res = await fetch('https://shopee.vn/api/v4/shop/rcmd_items', {
       method: 'POST',
       headers: {
@@ -794,8 +789,10 @@
       credentials: 'include',
       body: JSON.stringify(body)
     });
+    console.log('Response status:', res.status);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const json = await res.json();
+    console.log('Response data:', json);
     if (json.error !== 0) throw new Error(json.error_msg || 'API error');
     return json.data;
   }
@@ -806,36 +803,37 @@
     const limit = 48;
     while (true) {
       prog.innerHTML = `Đang tải trang offset=${offset}...`;
+      console.log('Bắt đầu tải offset', offset);
       let data;
       try {
         data = await fetchRcmdItemsPage(shopId, offset, limit);
       } catch (e) {
         prog.innerHTML = `<span class="warning">Lỗi khi tải dữ liệu: ${e.message}</span>`;
+        console.error(e);
         return [];
       }
 
       const cards = data?.centralize_item_card?.item_cards || [];
-      if (cards.length === 0) break; // Hết sản phẩm
+      console.log('Số cards nhận được:', cards.length);
+      if (cards.length === 0) break;
       allItems.push(...cards);
 
-      // Kiểm tra điều kiện dừng
       if (data.no_more === true) break;
       if (allItems.length >= maxItems) break;
-      if (cards.length < limit) break; // Trang cuối không đủ limit -> hết
+      if (cards.length < limit) break;
 
       offset += limit;
-      // Delay ngẫu nhiên giữa các trang
       await new Promise(r => setTimeout(r, 500 + Math.random() * 1000));
     }
 
-    // Cắt theo maxItems
     if (allItems.length > maxItems) allItems = allItems.slice(0, maxItems);
 
-    // Lọc theo discount tối thiểu
-    return allItems.filter(card => {
+    const filtered = allItems.filter(card => {
       const discount = card.item_card_display_price?.discount || 0;
       return discount >= minDiscount;
     });
+    console.log('Tổng items:', allItems.length, 'Sau lọc:', filtered.length);
+    return filtered;
   }
 
   function renderRcmdResult(items) {
@@ -862,13 +860,13 @@
       const pv = dp.recommended_platform_voucher_info;
       const sv = dp.recommended_shop_voucher_info;
       if (pv) {
-        const vDisc = pv.voucher_discount ? fmtK(pv.voucher_discount) : '0k';
-        const vMin = pv.min_spend ? fmtK(pv.min_spend) : '0đ';
+        const vDisc = pv.voucher_discount ? fmtKLocal(pv.voucher_discount) : '0k';
+        const vMin = pv.min_spend ? fmtKLocal(pv.min_spend) : '0đ';
         voucherText += ` [Platform: ${vDisc}/${vMin}]`;
       }
       if (sv) {
-        const vDisc = sv.voucher_discount ? fmtK(sv.voucher_discount) : '0k';
-        const vMin = sv.min_spend ? fmtK(sv.min_spend) : '0đ';
+        const vDisc = sv.voucher_discount ? fmtKLocal(sv.voucher_discount) : '0k';
+        const vMin = sv.min_spend ? fmtKLocal(sv.min_spend) : '0đ';
         voucherText += ` [Shop: ${vDisc}/${vMin}]`;
       }
       html += `<div class="result-item">
@@ -881,16 +879,19 @@
   }
 
   $('rcmd-search').onclick = async () => {
+    console.log('Nút rcmd-search được nhấn');
     const mode = document.querySelector('input[name="rcmd-mode"]:checked').value;
     let shopId;
     if (mode === 'url') {
       shopId = getShopIdFromUrl();
+      console.log('ShopId từ URL:', shopId);
       if (!shopId) {
         $('rcmd-progress').innerHTML = '<span class="warning">Không tìm thấy shop ID trong URL. Hãy vào trang shop.</span>';
         return;
       }
     } else {
       shopId = $('rcmd-input').value.trim();
+      console.log('ShopId nhập tay:', shopId);
       if (!shopId || !/^\d+$/.test(shopId)) {
         $('rcmd-progress').innerHTML = '<span class="warning">Shop ID không hợp lệ.</span>';
         return;
@@ -909,6 +910,7 @@
       }
     } catch (e) {
       prog.innerHTML = `<span class="warning">Lỗi: ${e.message}</span>`;
+      console.error(e);
     }
   };
 

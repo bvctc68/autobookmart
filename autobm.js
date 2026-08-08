@@ -4,13 +4,148 @@
 
   // ================= CSS =================
   const style = document.createElement('style');
-  style.textContent = '#cf2-popup{position:fixed;top:20px;left:50%;transform:translateX(-50%);width:850px;max-height:90vh;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.3);border-radius:12px;z-index:9999;font-family:Arial;display:flex;flex-direction:column;resize:both;overflow:auto} #cf2-popup .popup-header{cursor:move;display:flex;justify-content:space-between;align-items:center;padding:10px 15px;background:#f5f5f5;border-radius:12px 12px 0 0;user-select:none} #cf2-popup .popup-header h3{margin:0;font-size:16px;flex:1} #cf2-popup .popup-header .header-btns{display:flex;gap:5px;align-items:center} #cf2-popup .popup-header button{background:#ddd;border:none;font-size:18px;cursor:pointer;width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center} #cf2-popup.minimized .popup-body{display:none} #cf2-popup .tab-row{display:flex;border-bottom:1px solid #ddd} #cf2-popup .tab-btn{padding:8px 20px;cursor:pointer;background:#f5f5f5;border:none;font-size:14px;margin-right:2px} #cf2-popup .tab-btn.active{background:#fff;font-weight:bold;border:1px solid #ddd;border-bottom:1px solid #fff} #cf2-popup .tab-content{display:none;padding:15px;flex:1;overflow-y:auto} #cf2-popup .tab-content.active{display:block} #cf2-popup textarea{width:100%;height:60px;padding:10px;margin:10px 0;border:1px solid #ddd;border-radius:6px;resize:vertical;box-sizing:border-box} #cf2-popup input[type=number]{width:80px;padding:6px} #cf2-popup button.popup-action{background:#ee4d2d;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin:2px} #cf2-popup .result-item{margin:4px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap} #cf2-popup .link-text{flex:1;word-break:break-all} #cf2-popup .copy-btn{background:#007bff;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer} #cf2-popup .copy-all{background:#28a745;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin:2px} #cf2-popup .info-text{font-size:12px;color:#888} #cf2-popup .mode-row{display:flex;gap:20px;align-items:center;margin:8px 0} #cf2-popup .variant-btn{background:#6c757d;color:#fff;border:none;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:12px;user-select:none} .progress{font-size:13px;color:#555;margin:4px 0} .warning{color:#d9534f;font-weight:bold} .filter-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0} .filter-row label{font-size:13px} .filter-row input{width:60px;padding:4px} #cf2-popup table{width:100%;border-collapse:collapse;margin:10px 0} #cf2-popup th,#cf2-popup td{border:1px solid #ddd;padding:8px;text-align:left} #cf2-popup .scan-buttons{display:flex;gap:10px;margin-bottom:10px} #cf2-popup .vouch-date-header{font-weight:bold;margin-top:12px;padding:4px 0;border-bottom:1px solid #eee;font-size:14px;color:#333}';
+  style.textContent = `
+    /* Popup chính */
+    #cf2-popup{position:fixed;top:20px;left:50%;transform:translateX(-50%);width:900px;max-height:95vh;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.3);border-radius:12px;z-index:9999;font-family:Arial;display:flex;flex-direction:column;resize:both;overflow:auto}
+    #cf2-popup .popup-header{cursor:move;display:flex;justify-content:space-between;align-items:center;padding:10px 15px;background:#f5f5f5;border-radius:12px 12px 0 0;user-select:none}
+    #cf2-popup .popup-header h3{margin:0;font-size:16px;flex:1}
+    #cf2-popup .popup-header .header-btns{display:flex;gap:5px;align-items:center}
+    #cf2-popup .popup-header button{background:#ddd;border:none;font-size:18px;cursor:pointer;width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center}
+    #cf2-popup.minimized .popup-body{display:none}
+    #cf2-popup .tab-row{display:flex;border-bottom:1px solid #ddd;flex-wrap:wrap}
+    #cf2-popup .tab-btn{padding:8px 12px;cursor:pointer;background:#f5f5f5;border:none;font-size:13px;margin-right:2px;white-space:nowrap}
+    #cf2-popup .tab-btn.active{background:#fff;font-weight:bold;border:1px solid #ddd;border-bottom:1px solid #fff}
+    #cf2-popup .tab-content{display:none;padding:15px;flex:1;overflow-y:auto}
+    #cf2-popup .tab-content.active{display:block}
+    #cf2-popup textarea{width:100%;height:60px;padding:10px;margin:10px 0;border:1px solid #ddd;border-radius:6px;resize:vertical;box-sizing:border-box}
+    #cf2-popup input[type=number]{width:80px;padding:6px}
+    #cf2-popup button.popup-action{background:#ee4d2d;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin:2px}
+    #cf2-popup .result-item{margin:4px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    #cf2-popup .link-text{flex:1;word-break:break-all}
+    #cf2-popup .copy-btn{background:#007bff;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer}
+    #cf2-popup .copy-all{background:#28a745;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin:2px}
+    #cf2-popup .info-text{font-size:12px;color:#888}
+    #cf2-popup .mode-row{display:flex;gap:20px;align-items:center;margin:8px 0}
+    #cf2-popup .variant-btn{background:#6c757d;color:#fff;border:none;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:12px;user-select:none}
+    .progress{font-size:13px;color:#555;margin:4px 0}
+    .warning{color:#d9534f;font-weight:bold}
+    .filter-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0}
+    .filter-row label{font-size:13px}
+    .filter-row input{width:60px;padding:4px}
+    #cf2-popup table{width:100%;border-collapse:collapse;margin:10px 0}
+    #cf2-popup th,#cf2-popup td{border:1px solid #ddd;padding:8px;text-align:left}
+    #cf2-popup .scan-buttons{display:flex;gap:10px;margin-bottom:10px}
+    #cf2-popup .vouch-date-header{font-weight:bold;margin-top:12px;padding:4px 0;border-bottom:1px solid #eee;font-size:14px;color:#333}
+    /* Thêm class trạng thái cho tab lưu mã */
+    .vbm-success{color:#0a0;font-weight:bold}
+    .vbm-error{color:#d00;font-weight:bold}
+    .vbm-warn{color:#e67e22;font-weight:bold}
+  `;
   document.head.appendChild(style);
 
   // ================= POPUP HTML =================
   const popup = document.createElement('div');
   popup.id = 'cf2-popup';
-  popup.innerHTML = '<div class="popup-header" id="cf2-header"><h3>🛍️ Săn Shopee (Telegram Bot)</h3><div class="header-btns"><span id="ws-status" title="Trạng thái kết nối server" style="cursor:pointer;font-size:18px;margin-right:8px">🔴</span><button id="cf2-minimize" title="Thu nhỏ / Mở rộng">–</button><button id="cf2-close" title="Đóng">✕</button></div></div><div class="popup-body"><div class="tab-row"><button class="tab-btn active" data-tab="flash">⚡ Flash Sale</button><button class="tab-btn" data-tab="voucher">🎫 Voucher</button><button class="tab-btn" data-tab="scan">📋 Scan SP</button></div><div class="tab-content active" id="flash-content"><div class="mode-row"><label><input type="radio" name="flash-mode" value="html" checked> Quét HTML</label><label><input type="radio" name="flash-mode" value="id"> Nhập Shop ID</label><label><input type="radio" name="flash-mode" value="category"> Category (cat.xxx)</label></div><textarea id="flash-input" placeholder="Nhập danh sách Shop ID hoặc Category ID (tùy chế độ)"></textarea><label>Giảm giá ≥ <input id="flash-min" type="number" value="70" min="0" max="99">%</label><br><label>Giá gốc ≥ <input id="flash-price-min" type="number" value="0" min="0" step="10" placeholder="k">k</label><br><label>Số shop tối đa <input id="flash-maxshop" type="number" value="10" min="1" max="50"></label><br><label><input type="checkbox" id="flash-ongoing"> Chỉ đang diễn ra</label><br><button id="flash-search" class="popup-action">🔍 Tìm Flash Sale</button><button id="flash-copyall" class="copy-all" style="display:none">📋 Copy tất cả</button><button id="flash-reset" style="background:#ffc107;color:#000;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;margin:2px">🗑️ Reset đã quét</button><div id="flash-progress" class="progress"></div><div class="info-text" id="flash-info"></div><div id="flash-result"></div></div><div class="tab-content" id="voucher-content"><div class="mode-row"><label><input type="radio" name="vouch-mode" value="html" checked> Quét HTML</label><label><input type="radio" name="vouch-mode" value="id"> Nhập Shop ID</label></div><textarea id="vouch-input" placeholder="Nhập danh sách Shop ID (nếu chọn Nhập Shop ID)"></textarea><div class="filter-row"><label>Giảm % ≥</label><input id="vouch-fpct" type="number" placeholder="%" min="0"><label>Đơn tối thiểu ≥</label><input id="vouch-fmin" type="number" placeholder="k" min="0"><label>Giảm tối đa ≥</label><input id="vouch-fcap" type="number" placeholder="k" min="0"><label>Số shop tối đa</label><input id="vouch-maxshop" type="number" value="5" min="1" max="30"></div><button id="vouch-search" class="popup-action">🔍 Lấy voucher</button><button id="vouch-copyall" class="copy-all" style="display:none">📋 Copy tất cả</button><button id="vouch-reset" style="background:#ffc107;color:#000;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;margin:2px">🗑️ Reset đã quét</button><div id="vouch-progress" class="progress"></div><div class="info-text" id="vouch-info"></div><div id="vouch-result"></div></div><div class="tab-content" id="scan-content"><div class="scan-buttons"><button id="scan-scan" class="popup-action">🔍 Quét lại</button><button id="scan-copyshop" class="popup-action" style="background:#007bff">📋 Sao chép tất cả ID Shop</button><button id="scan-reset" style="background:#ffc107;color:#000;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;margin:2px">🗑️ Xóa lịch sử</button></div><div class="tabs" style="display:flex;border-bottom:1px solid #ddd;margin-bottom:10px"><button class="tab-btn active" data-subtab="scan-shopid">ID Shop</button><button class="tab-btn" data-subtab="scan-product">URL + Tiêu đề</button></div><div id="scan-shopid" class="subtab-content active" style="padding:10px 0"></div><div id="scan-product" class="subtab-content" style="padding:10px 0;display:none"></div></div></div>';
+  popup.innerHTML = `
+    <div class="popup-header" id="cf2-header">
+      <h3>🛍️ Săn Shopee All-in-One</h3>
+      <div class="header-btns">
+        <span id="ws-status" title="Trạng thái kết nối server" style="cursor:pointer;font-size:18px;margin-right:8px">🔴</span>
+        <button id="cf2-minimize" title="Thu nhỏ / Mở rộng">–</button>
+        <button id="cf2-close" title="Đóng">✕</button>
+      </div>
+    </div>
+    <div class="popup-body">
+      <div class="tab-row">
+        <button class="tab-btn active" data-tab="flash">⚡ Flash Sale</button>
+        <button class="tab-btn" data-tab="voucher">🎫 Voucher Shop</button>
+        <button class="tab-btn" data-tab="scp">🎯 SCP Deals</button>
+        <button class="tab-btn" data-tab="savevoucher">💾 Lưu mã</button>
+        <button class="tab-btn" data-tab="scan">📋 Scan SP</button>
+      </div>
+
+      <!-- FLASH SALE -->
+      <div class="tab-content active" id="flash-content">
+        <div class="mode-row">
+          <label><input type="radio" name="flash-mode" value="html" checked> Quét HTML</label>
+          <label><input type="radio" name="flash-mode" value="id"> Nhập Shop ID</label>
+          <label><input type="radio" name="flash-mode" value="category"> Category (cat.xxx)</label>
+        </div>
+        <textarea id="flash-input" placeholder="Nhập danh sách Shop ID hoặc Category ID (tùy chế độ)"></textarea>
+        <label>Giảm giá ≥ <input id="flash-min" type="number" value="70" min="0" max="99">%</label><br>
+        <label>Giá gốc ≥ <input id="flash-price-min" type="number" value="0" min="0" step="10" placeholder="k">k</label><br>
+        <label>Số shop tối đa <input id="flash-maxshop" type="number" value="10" min="1" max="50"></label><br>
+        <label><input type="checkbox" id="flash-ongoing"> Chỉ đang diễn ra</label><br>
+        <button id="flash-search" class="popup-action">🔍 Tìm Flash Sale</button>
+        <button id="flash-copyall" class="copy-all" style="display:none">📋 Copy tất cả</button>
+        <button id="flash-reset" style="background:#ffc107;color:#000;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;margin:2px">🗑️ Reset đã quét</button>
+        <div id="flash-progress" class="progress"></div>
+        <div class="info-text" id="flash-info"></div>
+        <div id="flash-result"></div>
+      </div>
+
+      <!-- VOUCHER SHOP -->
+      <div class="tab-content" id="voucher-content">
+        <div class="mode-row">
+          <label><input type="radio" name="vouch-mode" value="html" checked> Quét HTML</label>
+          <label><input type="radio" name="vouch-mode" value="id"> Nhập Shop ID</label>
+        </div>
+        <textarea id="vouch-input" placeholder="Nhập danh sách Shop ID (nếu chọn Nhập Shop ID)"></textarea>
+        <div class="filter-row">
+          <label>Giảm % ≥</label><input id="vouch-fpct" type="number" placeholder="%" min="0">
+          <label>Đơn tối thiểu ≥</label><input id="vouch-fmin" type="number" placeholder="k" min="0">
+          <label>Giảm tối đa ≥</label><input id="vouch-fcap" type="number" placeholder="k" min="0">
+          <label>Số shop tối đa</label><input id="vouch-maxshop" type="number" value="5" min="1" max="30">
+        </div>
+        <button id="vouch-search" class="popup-action">🔍 Lấy voucher</button>
+        <button id="vouch-copyall" class="copy-all" style="display:none">📋 Copy tất cả</button>
+        <button id="vouch-reset" style="background:#ffc107;color:#000;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;margin:2px">🗑️ Reset đã quét</button>
+        <div id="vouch-progress" class="progress"></div>
+        <div class="info-text" id="vouch-info"></div>
+        <div id="vouch-result"></div>
+      </div>
+
+      <!-- SCP DEALS (Tích hợp Bookmark 1) -->
+      <div class="tab-content" id="scp-content">
+        <div class="mode-row">
+          <label><input type="radio" name="scp-mode" value="html" checked> Quét HTML</label>
+          <label><input type="radio" name="scp-mode" value="id"> Nhập Shop ID</label>
+        </div>
+        <textarea id="scp-input" placeholder="Nhập danh sách Shop ID (nếu chọn Nhập Shop ID)"></textarea>
+        <label>Giảm giá ≥ <input id="scp-min" type="number" value="60" min="0" max="99">%</label>
+        <label>Số shop tối đa <input id="scp-maxshop" type="number" value="10" min="1" max="30"></label>
+        <button id="scp-search" class="popup-action">🔍 Lấy SCP Deals</button>
+        <div id="scp-progress" class="progress"></div>
+        <div id="scp-result" style="margin-top:10px"></div>
+      </div>
+
+      <!-- LƯU MÃ VOUCHER (Tích hợp Bookmark 2) -->
+      <div class="tab-content" id="savevoucher-content">
+        <textarea id="sv-input" placeholder="Nhập mã voucher, mỗi mã một dòng..." style="height:80px"></textarea>
+        <button id="sv-save" class="popup-action">📥 Lưu tất cả</button>
+        <div id="sv-status" class="progress"></div>
+        <table id="sv-table" style="width:100%;border-collapse:collapse;margin-top:10px">
+          <thead><tr><th>Mã & Thông tin</th><th>Trạng thái</th><th>Thời gian</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- SCAN SP -->
+      <div class="tab-content" id="scan-content">
+        <div class="scan-buttons">
+          <button id="scan-scan" class="popup-action">🔍 Quét lại</button>
+          <button id="scan-copyshop" class="popup-action" style="background:#007bff">📋 Sao chép tất cả ID Shop</button>
+          <button id="scan-reset" style="background:#ffc107;color:#000;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;margin:2px">🗑️ Xóa lịch sử</button>
+        </div>
+        <div class="tabs" style="display:flex;border-bottom:1px solid #ddd;margin-bottom:10px">
+          <button class="tab-btn active" data-subtab="scan-shopid">ID Shop</button>
+          <button class="tab-btn" data-subtab="scan-product">URL + Tiêu đề</button>
+        </div>
+        <div id="scan-shopid" class="subtab-content active" style="padding:10px 0"></div>
+        <div id="scan-product" class="subtab-content" style="padding:10px 0;display:none"></div>
+      </div>
+    </div>
+  `;
   document.body.appendChild(popup);
 
   // ================= DRAG & DROP =================
@@ -48,7 +183,8 @@
       document.querySelectorAll('.tab-btn[data-tab]').forEach(b => b.classList.remove('active'));
       this.classList.add('active');
       document.querySelectorAll('#cf2-popup .tab-content').forEach(c => c.classList.remove('active'));
-      document.getElementById(this.dataset.tab + '-content').classList.add('active');
+      const target = document.getElementById(this.dataset.tab + '-content');
+      if (target) target.classList.add('active');
       if (this.dataset.tab === 'scan') scanPage();
     });
   });
@@ -139,7 +275,7 @@
     if (confirm('Xóa toàn bộ lịch sử shop đã quét?')) { scanReset(); scanPage(); }
   });
 
-  // ================= FLASH SALE =================
+  // ================= FLASH SALE (giữ nguyên từ gốc) =================
   const FLASH_KEY = 'cf2_scanned_shops';
   let flashItems = [], flashAbort = null;
   function flashGetScanned() { try { return JSON.parse(localStorage.getItem(FLASH_KEY)) || []; } catch (e) { return []; } }
@@ -202,7 +338,7 @@
       $('flash-copyall').textContent = '✓ Đã copy';
       setTimeout(() => $('flash-copyall').textContent = o, 1500);
     });
-    sendResultToServer('⚡ Flash Sale:\n' + all); // Gửi kết quả về Telegram
+    sendResultToServer('⚡ Flash Sale:\n' + all);
   };
 
   $('flash-reset').onclick = () => { if (confirm('Xóa lịch sử quét Flash Sale?')) { flashReset(); flashUpdateInfo(); } };
@@ -335,7 +471,7 @@
     flashRender();
   };
 
-  // ================= VOUCHER =================
+  // ================= VOUCHER SHOP (giữ nguyên từ gốc) =================
   const VOUCH_KEY = 'vcat_scanned_shops';
   let vouchVouchers = [], vouchAbort = null;
   function vouchGetScanned() { try { return JSON.parse(localStorage.getItem(VOUCH_KEY)) || []; } catch (e) { return []; } }
@@ -422,7 +558,7 @@
       $('vouch-copyall').textContent = '✓ Đã copy';
       setTimeout(() => $('vouch-copyall').textContent = o, 1500);
     });
-    sendResultToServer('🎫 Voucher:\n' + texts); // Gửi kết quả về Telegram
+    sendResultToServer('🎫 Voucher:\n' + texts);
   };
 
   ['vouch-fpct', 'vouch-fmin', 'vouch-fcap'].forEach(id => $(id).addEventListener('input', vouchRender));
@@ -505,6 +641,208 @@
     else { prog.innerHTML = 'Đã lấy ' + vouchers.length + ' voucher từ ' + shopIds.length + ' shop.'; vouchVouchers = vouchers; vouchRender(); }
   };
 
+  // ================= SCP DEALS (TÍCH HỢP BOOKMARK 1) =================
+  let scpDeals = [], scpVouchers = [];
+  const fmtK = n => { let k = n / 1e8; return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + 'k'; };
+  const fmtTime = ts => new Date(ts * 1e3).toLocaleString('vi-VN', { hour12: false });
+
+  function renderSCP() {
+    const min = parseInt($('scp-min').value) || 60;
+    const fd = scpDeals.filter(d => d.discount >= min).sort((a, b) => b.discount - a.discount);
+    const now = Date.now() / 1e3;
+    const fv = scpVouchers.filter((v, i, a) => a.findIndex(x => x.promotionId === v.promotionId && x.code === v.code) === i);
+    let html = '<div><b>🔥 Deals (' + fd.length + ')</b><div style="max-height:200px;overflow:auto;margin-bottom:10px">';
+    fd.forEach(d => {
+      const short = d.name.substring(0, 20) + (d.name.length > 20 ? '...' : '');
+      const url = 'https://shopee.vn/product/' + d.shopid + '/' + d.itemid;
+      html += `<div class="result-item"><span class="link-text">-${d.discount}% - ${short}: <a href="${url}" target="_blank">${url}</a></span></div>`;
+    });
+    if (!fd.length) html += '<i>Không có deal phù hợp</i>';
+    html += '</div></div>';
+    html += '<div><b>🎟 Vouchers (' + fv.length + ')</b><div style="max-height:200px;overflow:auto">';
+    fv.forEach(v => {
+      const prefix = v.start > now ? '- ' + fmtTime(v.start) + ' ' : '- ';
+      const url = 'https://shopee.vn/search?promotionId=' + v.promotionId + '&signature=' + v.sig + '&voucherCode=' + encodeURIComponent(v.code);
+      html += `<div class="result-item" style="border-bottom:1px solid #eee;padding-bottom:4px">${prefix}<b>${v.code}</b> giảm ${fmtK(v.discount)}/${fmtK(v.min)}: <a href="${url}" target="_blank">${url}</a></div>`;
+    });
+    if (!fv.length) html += '<i>Không có voucher</i>';
+    html += '</div></div>';
+    $('scp-result').innerHTML = html;
+  }
+
+  $('scp-min').addEventListener('input', renderSCP);
+
+  $('scp-search').onclick = async () => {
+    const mode = document.querySelector('input[name="scp-mode"]:checked').value;
+    const input = $('scp-input').value.trim();
+    const maxShop = parseInt($('scp-maxshop').value) || 10;
+    const prog = $('scp-progress');
+    prog.innerHTML = '';
+    scpDeals = [];
+    scpVouchers = [];
+
+    let shopIds = [];
+    if (mode === 'html') {
+      prog.innerHTML = 'Đang quét HTML...';
+      const all = extractShopIdsFromHTML();
+      if (!all.length) { prog.innerHTML = 'Không tìm thấy shop.'; return; }
+      shopIds = all.slice(0, maxShop);
+    } else if (mode === 'id') {
+      if (!input || !/^[\d\s,]+$/.test(input)) { prog.innerHTML = 'Danh sách ID không hợp lệ.'; return; }
+      shopIds = input.split(/[\s,]+/).filter(id => /^\d+$/.test(id)).slice(0, maxShop);
+      if (!shopIds.length) { prog.innerHTML = 'Không có ID hợp lệ.'; return; }
+    }
+
+    prog.innerHTML = 'Đang xử lý ' + shopIds.length + ' shop...';
+    let processed = 0;
+    const total = shopIds.length;
+    const queue = [...shopIds];
+
+    while (queue.length > 0) {
+      const batchSize = Math.floor(Math.random() * 4) + 2;
+      const batch = queue.splice(0, batchSize);
+      for (const sid of batch) {
+        processed++;
+        try {
+          const r = await fetch('https://shopee.vn/api/v4/shop/get_scp_list?shopid=' + sid, {
+            headers: { 'x-requested-with': 'XMLHttpRequest', 'x-api-source': 'pc', 'referer': 'https://shopee.vn/' },
+            credentials: 'include'
+          });
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const j = await r.json();
+          if (j.error !== 0) throw new Error(j.error_msg);
+          (j.data?.scp_session_detail || []).forEach(sess => {
+            (sess.deep_discount_list || [sess]).forEach(list => {
+              (list.items || []).forEach(obj => {
+                const it = obj.item || {};
+                if (!it.itemid) return;
+                const discount = Math.round(it.item_card_display_price?.discount ?? (it.show_discount || it.raw_discount || 0));
+                scpDeals.push({ discount, name: it.name || '', shopid: it.shopid, itemid: it.itemid });
+                [it.item_card_display_price?.recommended_shop_voucher_info,
+                 it.item_card_display_price?.recommended_platform_voucher_info].forEach(v => {
+                  if (!v) return;
+                  scpVouchers.push({
+                    start: v.time_info?.start_time || v.start_time || 0,
+                    code: v.voucher_code || '',
+                    discount: v.voucher_discount || 0,
+                    min: v.min_spend || 0,
+                    promotionId: v.promotion_id || '',
+                    sig: v.signature || ''
+                  });
+                });
+              });
+            });
+          });
+          prog.innerHTML = `Đã xong shop ${sid} (${processed}/${total})`;
+        } catch (e) {
+          prog.innerHTML = `Lỗi shop ${sid}: ${e.message}`;
+        }
+      }
+      if (queue.length > 0) {
+        const delay = Math.floor(Math.random() * 16) + 5;
+        prog.innerHTML += ` – Chờ ${delay}s...`;
+        await new Promise(r => setTimeout(r, delay * 1000));
+      }
+    }
+    prog.innerHTML = `Xong! ${scpDeals.length} deals, ${scpVouchers.length} vouchers.`;
+    renderSCP();
+    // Gửi kết quả qua WebSocket (tùy chọn)
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      const summary = `🎯 SCP Deals: ${scpDeals.length} deals, ${scpVouchers.length} vouchers`;
+      ws.send(summary);
+    }
+  };
+
+  // ================= LƯU MÃ VOUCHER (TÍCH HỢP BOOKMARK 2) =================
+  function formatTimeParts(ts) {
+    const d = new Date(ts * 1000);
+    return { hour: d.getHours(), day: d.getDate(), month: d.getMonth() + 1 };
+  }
+  function formatK2(amount) { return Math.round(amount / 1e8); }
+
+  function addSaveRow(code, data) {
+    const tbody = document.querySelector('#sv-table tbody');
+    const tr = document.createElement('tr');
+
+    const tdInfo = document.createElement('td');
+    if (data && data.voucher) {
+      const v = data.voucher;
+      const start = formatTimeParts(v.start_time || 0);
+      const discountText = v.reward_percentage > 0
+        ? `${v.reward_percentage}% max ${formatK2(v.reward_cap||0)}k`
+        : `${formatK2(v.reward_value||0)}k`;
+      const minSpend = `${formatK2(v.min_spend||0)}k`;
+      const link = `https://shopee.vn/search?promotionId=${v.promotionid}&signature=${v.signature}&voucherCode=${code}`;
+      tdInfo.innerHTML = `- ${start.hour}h: ${code} giảm ${discountText}/${minSpend} áp list: <a href="${link}" target="_blank">link</a>`;
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'copy-btn';
+      copyBtn.textContent = '📋 Copy';
+      copyBtn.onclick = () => {
+        const text = `- ${start.hour}h: ${code} giảm ${discountText}/${minSpend} áp list: ${link}`;
+        navigator.clipboard.writeText(text).then(() => {
+          copyBtn.textContent = '✅';
+          setTimeout(() => copyBtn.textContent = '📋 Copy', 1500);
+        });
+      };
+      tdInfo.appendChild(copyBtn);
+    } else {
+      tdInfo.textContent = `🔸 ${code}`;
+    }
+
+    const tdStatus = document.createElement('td');
+    if (!data) {
+      tdStatus.className = 'vbm-error'; tdStatus.textContent = '❌ Lỗi mạng';
+    } else if (data.error !== 0) {
+      tdStatus.className = 'vbm-error'; tdStatus.textContent = `❌ ${data.error_msg || data.error}`;
+    } else {
+      const msgCode = data.invalid_message_code;
+      if (msgCode === 0) { tdStatus.className = 'vbm-success'; tdStatus.textContent = '✅ Đã lưu'; }
+      else if (msgCode === 4) { tdStatus.className = 'vbm-error'; tdStatus.textContent = '❌ Hết lượt'; }
+      else if (msgCode === 14) { tdStatus.className = 'vbm-warn'; tdStatus.textContent = '⚠️ Đã lưu trước'; }
+      else { tdStatus.className = 'vbm-warn'; tdStatus.textContent = `⚠️ Mã ${msgCode}`; }
+    }
+
+    const tdTime = document.createElement('td');
+    if (data && data.voucher) {
+      const v = data.voucher;
+      const start = formatTimeParts(v.start_time || 0);
+      const end = formatTimeParts(v.end_time || 0);
+      tdTime.textContent = `${start.hour}h - ${start.day}/${start.month} | ${end.hour}h - ${end.day}/${end.month}`;
+    } else {
+      tdTime.textContent = '—';
+    }
+
+    tr.appendChild(tdInfo);
+    tr.appendChild(tdStatus);
+    tr.appendChild(tdTime);
+    tbody.prepend(tr);
+  }
+
+  $('sv-save').onclick = async () => {
+    const codes = $('sv-input').value.split('\n').map(s => s.trim()).filter(Boolean);
+    if (!codes.length) return;
+    $('sv-save').disabled = true;
+    $('sv-status').textContent = `Đang xử lý ${codes.length} mã...`;
+    for (let i = 0; i < codes.length; i++) {
+      const code = codes[i];
+      $('sv-status').textContent = `Đang xử lý ${i+1}/${codes.length}: ${code}...`;
+      try {
+        const res = await fetch('https://shopee.vn/api/v2/voucher_wallet/save_platform_voucher_by_voucher_code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ voucher_code: code })
+        });
+        const json = await res.json();
+        addSaveRow(code, json);
+      } catch (e) {
+        addSaveRow(code, null);
+      }
+      await new Promise(r => setTimeout(r, 400));
+    }
+    $('sv-save').disabled = false;
+    $('sv-status').textContent = '✅ Hoàn thành!';
+  };
+
   // ================= WEBSOCKET =================
   let ws = null;
   let wsReconnectTimer = null;
@@ -538,6 +876,16 @@
           document.querySelector('input[name="vouch-mode"][value="html"]').checked = true;
           document.querySelector('.tab-btn[data-tab="voucher"]').click();
           $('vouch-search').click();
+        } else if (cmd.action === 'scan_scp') {
+          // Kích hoạt tab SCP và quét
+          document.querySelector('.tab-btn[data-tab="scp"]').click();
+          $('scp-search').click();
+        } else if (cmd.action === 'save_voucher') {
+          document.querySelector('.tab-btn[data-tab="savevoucher"]').click();
+          if (cmd.codes && Array.isArray(cmd.codes)) {
+            $('sv-input').value = cmd.codes.join('\n');
+            $('sv-save').click();
+          }
         }
       } catch (e) {}
     };
@@ -557,10 +905,8 @@
 
   $('ws-status').addEventListener('click', connectWebSocket);
 
-  // Khởi động WebSocket
+  // ================= KHỞI ĐỘNG =================
   connectWebSocket();
-
-  // Chạy scan lần đầu
   scanPage();
   flashUpdateInfo();
   vouchUpdateInfo();

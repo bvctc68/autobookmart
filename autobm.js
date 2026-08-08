@@ -1,69 +1,46 @@
 (() => {
   // ================= CẤU HÌNH =================
-  const SERVER_WS_URL = 'wss://autobookmart.onrender.com'; // THAY BẰNG URL THỰC TẾ
+  const SERVER_WS_URL = 'wss://YOUR_RENDER_APP.onrender.com'; // THAY BẰNG URL THỰC TẾ
 
-  // ================= CSS =================
+  // ================= CSS (ẩn popup) =================
   const style = document.createElement('style');
-  style.textContent = '#cf2-popup{position:fixed;top:20px;left:50%;transform:translateX(-50%);width:850px;max-height:90vh;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.3);border-radius:12px;z-index:9999;font-family:Arial;display:flex;flex-direction:column;resize:both;overflow:auto} #cf2-popup .popup-header{cursor:move;display:flex;justify-content:space-between;align-items:center;padding:10px 15px;background:#f5f5f5;border-radius:12px 12px 0 0;user-select:none} #cf2-popup .popup-header h3{margin:0;font-size:16px;flex:1} #cf2-popup .popup-header .header-btns{display:flex;gap:5px;align-items:center} #cf2-popup .popup-header button{background:#ddd;border:none;font-size:18px;cursor:pointer;width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center} #cf2-popup.minimized .popup-body{display:none} #cf2-popup .tab-row{display:flex;border-bottom:1px solid #ddd} #cf2-popup .tab-btn{padding:8px 20px;cursor:pointer;background:#f5f5f5;border:none;font-size:14px;margin-right:2px} #cf2-popup .tab-btn.active{background:#fff;font-weight:bold;border:1px solid #ddd;border-bottom:1px solid #fff} #cf2-popup .tab-content{display:none;padding:15px;flex:1;overflow-y:auto} #cf2-popup .tab-content.active{display:block} #cf2-popup textarea{width:100%;height:60px;padding:10px;margin:10px 0;border:1px solid #ddd;border-radius:6px;resize:vertical;box-sizing:border-box} #cf2-popup input[type=number]{width:80px;padding:6px} #cf2-popup button.popup-action{background:#ee4d2d;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin:2px} #cf2-popup .result-item{margin:4px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap} #cf2-popup .link-text{flex:1;word-break:break-all} #cf2-popup .copy-btn{background:#007bff;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer} #cf2-popup .copy-all{background:#28a745;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin:2px} #cf2-popup .info-text{font-size:12px;color:#888} #cf2-popup .mode-row{display:flex;gap:20px;align-items:center;margin:8px 0} #cf2-popup .variant-btn{background:#6c757d;color:#fff;border:none;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:12px;user-select:none} .progress{font-size:13px;color:#555;margin:4px 0} .warning{color:#d9534f;font-weight:bold} .filter-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0} .filter-row label{font-size:13px} .filter-row input{width:60px;padding:4px} #cf2-popup table{width:100%;border-collapse:collapse;margin:10px 0} #cf2-popup th,#cf2-popup td{border:1px solid #ddd;padding:8px;text-align:left} #cf2-popup .scan-buttons{display:flex;gap:10px;margin-bottom:10px} #cf2-popup .vouch-date-header{font-weight:bold;margin-top:12px;padding:4px 0;border-bottom:1px solid #eee;font-size:14px;color:#333}';
+  style.textContent = `#cf2-popup { display: none !important; }`; // Ẩn hoàn toàn popup
   document.head.appendChild(style);
 
-  // ================= POPUP HTML =================
-  const popup = document.createElement('div');
-  popup.id = 'cf2-popup';
-  popup.innerHTML = '<div class="popup-header" id="cf2-header"><h3>🛍️ Săn Shopee (Telegram Bot)</h3><div class="header-btns"><span id="ws-status" title="Trạng thái kết nối server" style="cursor:pointer;font-size:18px;margin-right:8px">🔴</span><button id="cf2-minimize" title="Thu nhỏ / Mở rộng">–</button><button id="cf2-close" title="Đóng">✕</button></div></div><div class="popup-body"><div class="tab-row"><button class="tab-btn active" data-tab="flash">⚡ Flash Sale</button><button class="tab-btn" data-tab="voucher">🎫 Voucher</button><button class="tab-btn" data-tab="scan">📋 Scan SP</button></div><div class="tab-content active" id="flash-content"><div class="mode-row"><label><input type="radio" name="flash-mode" value="html" checked> Quét HTML</label><label><input type="radio" name="flash-mode" value="id"> Nhập Shop ID</label><label><input type="radio" name="flash-mode" value="category"> Category (cat.xxx)</label></div><textarea id="flash-input" placeholder="Nhập danh sách Shop ID hoặc Category ID (tùy chế độ)"></textarea><label>Giảm giá ≥ <input id="flash-min" type="number" value="70" min="0" max="99">%</label><br><label>Giá gốc ≥ <input id="flash-price-min" type="number" value="0" min="0" step="10" placeholder="k">k</label><br><label>Số shop tối đa <input id="flash-maxshop" type="number" value="10" min="1" max="50"></label><br><label><input type="checkbox" id="flash-ongoing"> Chỉ đang diễn ra</label><br><button id="flash-search" class="popup-action">🔍 Tìm Flash Sale</button><button id="flash-copyall" class="copy-all" style="display:none">📋 Copy tất cả</button><button id="flash-reset" style="background:#ffc107;color:#000;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;margin:2px">🗑️ Reset đã quét</button><div id="flash-progress" class="progress"></div><div class="info-text" id="flash-info"></div><div id="flash-result"></div></div><div class="tab-content" id="voucher-content"><div class="mode-row"><label><input type="radio" name="vouch-mode" value="html" checked> Quét HTML</label><label><input type="radio" name="vouch-mode" value="id"> Nhập Shop ID</label></div><textarea id="vouch-input" placeholder="Nhập danh sách Shop ID (nếu chọn Nhập Shop ID)"></textarea><div class="filter-row"><label>Giảm % ≥</label><input id="vouch-fpct" type="number" placeholder="%" min="0"><label>Đơn tối thiểu ≥</label><input id="vouch-fmin" type="number" placeholder="k" min="0"><label>Giảm tối đa ≥</label><input id="vouch-fcap" type="number" placeholder="k" min="0"><label>Số shop tối đa</label><input id="vouch-maxshop" type="number" value="5" min="1" max="30"></div><button id="vouch-search" class="popup-action">🔍 Lấy voucher</button><button id="vouch-copyall" class="copy-all" style="display:none">📋 Copy tất cả</button><button id="vouch-reset" style="background:#ffc107;color:#000;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;margin:2px">🗑️ Reset đã quét</button><div id="vouch-progress" class="progress"></div><div class="info-text" id="vouch-info"></div><div id="vouch-result"></div></div><div class="tab-content" id="scan-content"><div class="scan-buttons"><button id="scan-scan" class="popup-action">🔍 Quét lại</button><button id="scan-copyshop" class="popup-action" style="background:#007bff">📋 Sao chép tất cả ID Shop</button><button id="scan-reset" style="background:#ffc107;color:#000;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;margin:2px">🗑️ Xóa lịch sử</button></div><div class="tabs" style="display:flex;border-bottom:1px solid #ddd;margin-bottom:10px"><button class="tab-btn active" data-subtab="scan-shopid">ID Shop</button><button class="tab-btn" data-subtab="scan-product">URL + Tiêu đề</button></div><div id="scan-shopid" class="subtab-content active" style="padding:10px 0"></div><div id="scan-product" class="subtab-content" style="padding:10px 0;display:none"></div></div></div>';
-  document.body.appendChild(popup);
+  // Không tạo popup HTML, chỉ giữ các chức năng quét
+  // Tạo các element ẩn nếu cần (ví dụ progress, result) để code cũ không lỗi
+  function createHiddenElement(id, tag = 'div') {
+    let el = document.getElementById(id);
+    if (!el) {
+      el = document.createElement(tag);
+      el.id = id;
+      el.style.display = 'none';
+      document.body.appendChild(el);
+    }
+    return el;
+  }
 
-  // ================= DRAG & DROP =================
-  let isDragging = false, startX, startY, initialX, initialY;
-  const header = document.getElementById('cf2-header');
-  header.addEventListener('mousedown', (e) => {
-    if (e.target.tagName === 'BUTTON' || e.target.id === 'ws-status') return;
-    isDragging = true;
-    startX = e.clientX;
-    startY = e.clientY;
-    const rect = popup.getBoundingClientRect();
-    initialX = rect.left;
-    initialY = rect.top;
-    popup.style.transform = 'none';
-    popup.style.left = initialX + 'px';
-    popup.style.top = initialY + 'px';
-    e.preventDefault();
-  });
-  document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-    popup.style.left = (initialX + e.clientX - startX) + 'px';
-    popup.style.top = (initialY + e.clientY - startY) + 'px';
-  });
-  document.addEventListener('mouseup', () => { isDragging = false; });
+  // Tạo sẵn các element cần thiết
+  createHiddenElement('flash-min', 'input');
+  createHiddenElement('flash-price-min', 'input');
+  createHiddenElement('flash-maxshop', 'input');
+  createHiddenElement('flash-ongoing', 'input');
+  createHiddenElement('flash-progress');
+  createHiddenElement('flash-result');
+  createHiddenElement('flash-copyall', 'button');
+  createHiddenElement('flash-info');
+  createHiddenElement('vouch-fpct', 'input');
+  createHiddenElement('vouch-fmin', 'input');
+  createHiddenElement('vouch-fcap', 'input');
+  createHiddenElement('vouch-maxshop', 'input');
+  createHiddenElement('vouch-progress');
+  createHiddenElement('vouch-result');
+  createHiddenElement('vouch-copyall', 'button');
+  createHiddenElement('vouch-info');
+  createHiddenElement('scan-shopid');
+  createHiddenElement('scan-product');
 
-  document.getElementById('cf2-minimize').addEventListener('click', () => {
-    popup.classList.toggle('minimized');
-    document.getElementById('cf2-minimize').textContent = popup.classList.contains('minimized') ? '+' : '–';
-  });
-  document.getElementById('cf2-close').addEventListener('click', () => popup.remove());
-
-  // ================= TAB HANDLERS =================
-  document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.tab-btn[data-tab]').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-      document.querySelectorAll('#cf2-popup .tab-content').forEach(c => c.classList.remove('active'));
-      document.getElementById(this.dataset.tab + '-content').classList.add('active');
-      if (this.dataset.tab === 'scan') scanPage();
-    });
-  });
-
-  document.querySelectorAll('#scan-content .tab-btn[data-subtab]').forEach(btn => {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('#scan-content .tab-btn[data-subtab]').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-      document.getElementById('scan-shopid').style.display = 'none';
-      document.getElementById('scan-product').style.display = 'none';
-      document.getElementById(this.dataset.subtab).style.display = 'block';
-    });
-  });
-
-  // ================= HELPER FUNCTIONS =================
+  // Các biến và hàm giữ nguyên, nhưng không dùng popup, chỉ dùng các element ẩn
   const $ = id => document.getElementById(id);
   function getCsrfToken() {
     const m = document.cookie.match(/csrftoken=([^;]+)/);
@@ -81,135 +58,21 @@
     return [...ids];
   }
 
-  // ================= SCAN SP (LƯU LỊCH SỬ) =================
-  const SCAN_KEY = 'cf2_scanned_shops_list';
-  function scanGetScanned() { try { return JSON.parse(localStorage.getItem(SCAN_KEY)) || []; } catch (e) { return []; } }
-  function scanAddScanned(ids) { const cur = scanGetScanned(); const upd = [...new Set([...cur, ...ids])]; localStorage.setItem(SCAN_KEY, JSON.stringify(upd)); return upd; }
-  function scanReset() { localStorage.removeItem(SCAN_KEY); }
-
-  function scanPage() {
-    const shopDiv = $('scan-shopid'), prodDiv = $('scan-product');
-    const products = [];
-    const currentShopSet = new Set();
-    document.querySelectorAll('a[href]').forEach(a => {
-      const href = a.href;
-      let m = href.match(/i\.(\d+)\.(\d+)/);
-      if (!m) return;
-      const shopId = m[1], itemId = m[2];
-      const link = 'https://shopee.vn/product/' + shopId + '/' + itemId;
-      let title = (a.getAttribute('aria-label') || '').replace(/^Product card:\s*/i, '');
-      if (!title) { const card = a.closest('div[role="group"][aria-label^="Product card:"]'); if (card) title = card.getAttribute('aria-label').replace(/^Product card:\s*/i, ''); }
-      if (!title) { const labeled = a.closest('[aria-label]'); if (labeled) { const lbl = labeled.getAttribute('aria-label'); if (lbl && lbl.indexOf('image overlay') !== 0) title = lbl.replace(/^Product card:\s*/i, ''); } }
-      if (!title) { title = (a.innerText || a.textContent || '').replace(/\s+/g, ' ').trim(); }
-      if (!title) title = 'Không tiêu đề';
-      title = title.replace(/^Product card:\s*/i, '');
-      const short = title.length > 20 ? title.slice(0, 20) + '...' : title;
-      products.push({ shopId, itemId, link, shortTitle: short, fullTitle: title });
-      currentShopSet.add(shopId);
-    });
-    const savedIds = scanGetScanned();
-    const allIds = scanAddScanned(Array.from(currentShopSet));
-    shopDiv.innerHTML = ''; prodDiv.innerHTML = '';
-    if (!allIds.length) {
-      shopDiv.innerHTML = '<p>Chưa quét được shop nào.</p>';
-      prodDiv.innerHTML = '<p>Không có dữ liệu.</p>';
-      return;
-    }
-    const sorted = allIds.slice().sort((a, b) => a - b);
-    let shopHtml = '<table><tr><th>ID Shop</th><th>Link Shop</th></tr>';
-    sorted.forEach(id => { shopHtml += `<tr><td>${id}</td><td><a href="https://shopee.vn/shop/${id}" target="_blank">https://shopee.vn/shop/${id}</a></td></tr>`; });
-    shopHtml += `</table><p>Tổng: <b>${sorted.length}</b> shop.</p>`;
-    shopDiv.innerHTML = shopHtml;
-    if (products.length) {
-      let prodHtml = '<ul>';
-      products.forEach(p => { prodHtml += `<li><span>${p.shortTitle}</span>: <a href="${p.link}" target="_blank">${p.link}</a></li>`; });
-      prodHtml += '</ul>';
-      prodDiv.innerHTML = prodHtml;
-    } else {
-      prodDiv.innerHTML = '<p>Không có sản phẩm ở trang này.</p>';
-    }
-  }
-  $('scan-scan').addEventListener('click', scanPage);
-  $('scan-copyshop').addEventListener('click', () => {
-    const ids = scanGetScanned();
-    if (!ids.length) { alert('Không có ID shop nào!'); return; }
-    navigator.clipboard.writeText(ids.join('\n')).then(() => alert('Đã sao chép ' + ids.length + ' ID shop!'));
-  });
-  $('scan-reset').addEventListener('click', () => {
-    if (confirm('Xóa toàn bộ lịch sử shop đã quét?')) { scanReset(); scanPage(); }
-  });
-
-  // ================= FLASH SALE =================
+  // Flash Sale functions
   const FLASH_KEY = 'cf2_scanned_shops';
   let flashItems = [], flashAbort = null;
   function flashGetScanned() { try { return JSON.parse(localStorage.getItem(FLASH_KEY)) || []; } catch (e) { return []; } }
   function flashAddScanned(ids) { const cur = flashGetScanned(); const upd = [...new Set([...cur, ...ids])]; localStorage.setItem(FLASH_KEY, JSON.stringify(upd)); return upd; }
-  function flashReset() { localStorage.removeItem(FLASH_KEY); }
-  function flashUpdateInfo() { const s = flashGetScanned(); $('flash-info').textContent = 'Đã quét ' + s.length + ' shop (bỏ qua khi quét lại)'; }
   function flashFormatPrice(v) { const d = v / 100000; if (d >= 1000000) return (d / 1000000).toFixed(1) + 'tr'; if (d >= 1000) return (d / 1000).toFixed(0) + 'k'; return d.toLocaleString('vi-VN'); }
   function flashTruncName(n) { return n.length > 30 ? n.substring(0, 30) + '..' : n; }
-  async function fetchModelNames(itemId, shopId, modelIds) {
-    try {
-      const r = await fetch('https://shopee.vn/api/v4/item/get?itemid=' + itemId + '&shopid=' + shopId, { headers: { 'x-requested-with': 'XMLHttpRequest' }, credentials: 'include' });
-      if (!r.ok) return null;
-      const j = await r.json();
-      if (j.error) return null;
-      const models = j.data?.models;
-      if (!models) return null;
-      const map = {};
-      models.forEach(m => { map[m.modelid] = m.name; });
-      return modelIds.map(mid => map[mid] || ('Model ' + mid)).join(', ');
-    } catch (e) { return null; }
-  }
-
-  function flashRender() {
-    const d = $('flash-result');
-    d.innerHTML = '';
-    if (!flashItems.length) { d.innerHTML = '<p>Không có sản phẩm flash sale nào.</p>'; $('flash-copyall').style.display = 'none'; return; }
-    const now = Math.floor(Date.now() / 1000);
-    let h = '';
-    flashItems.forEach(i => {
-      const upcoming = i.start_time > now;
-      let prefix = '';
-      if (upcoming) { const date = new Date(i.start_time * 1000); const mins = date.getMinutes(); prefix = '- ' + date.getHours() + 'H' + (mins > 0 ? mins.toString().padStart(2, '0') : '') + ' '; }
-      const text = prefix + '-' + i.raw_discount + '% còn ' + flashFormatPrice(i.price) + ' - ' + flashTruncName(i.name) + ': ' + i.link + ' [SL: ' + i.stock + ']';
-      const mids = i.model_ids || [];
-      const vbtn = mids.length > 0 ? '<button class="variant-btn" data-itemid="' + i.itemid + '" data-shopid="' + i.shopid + '" data-models=\'' + JSON.stringify(mids) + '\'>Phân loại</button>' : '';
-      h += '<div class="result-item"><span class="link-text">' + text + '</span>' + vbtn + '<span class="variant-info" style="font-size:12px;color:#555;margin-left:4px"></span></div>';
-    });
-    d.innerHTML = h;
-    $('flash-copyall').style.display = 'block';
-    d.querySelectorAll('.variant-btn').forEach(b => {
-      b.onclick = async function() {
-        const info = this.parentElement.querySelector('.variant-info');
-        info.textContent = 'Đang tải...';
-        const names = await fetchModelNames(this.dataset.itemid, this.dataset.shopid, JSON.parse(this.dataset.models));
-        info.textContent = names || 'Lỗi';
-      };
-    });
-  }
-
-  $('flash-copyall').onclick = () => {
-    const now = Math.floor(Date.now() / 1000);
-    const all = flashItems.map(i => {
-      const up = i.start_time > now;
-      let p = '';
-      if (up) { const d = new Date(i.start_time * 1000); const mins = d.getMinutes(); p = '- ' + d.getHours() + 'H' + (mins > 0 ? mins.toString().padStart(2, '0') : '') + ' '; }
-      return p + '-' + i.raw_discount + '% còn ' + flashFormatPrice(i.price) + ' - ' + flashTruncName(i.name) + ': ' + i.link + ' [SL: ' + i.stock + ']';
-    }).join('\n');
-    navigator.clipboard.writeText(all).then(() => {
-      const o = $('flash-copyall').textContent;
-      $('flash-copyall').textContent = '✓ Đã copy';
-      setTimeout(() => $('flash-copyall').textContent = o, 1500);
-    });
-    sendResultToServer('⚡ Flash Sale:\n' + all); // Gửi kết quả về Telegram
-  };
-
-  $('flash-reset').onclick = () => { if (confirm('Xóa lịch sử quét Flash Sale?')) { flashReset(); flashUpdateInfo(); } };
 
   async function fetchFlashSale(shopId) {
     const ctrl = flashAbort;
-    const r = await fetch('https://shopee.vn/api/v4/shop/get_shop_flash_sale_items?shopid=' + shopId, { headers: { 'x-requested-with': 'XMLHttpRequest' }, credentials: 'include', signal: ctrl ? ctrl.signal : undefined });
+    const r = await fetch('https://shopee.vn/api/v4/shop/get_shop_flash_sale_items?shopid=' + shopId, {
+      headers: { 'x-requested-with': 'XMLHttpRequest' },
+      credentials: 'include',
+      signal: ctrl ? ctrl.signal : undefined
+    });
     if (!r.ok) { if (r.status === 403 || r.status === 429) throw new Error('BLOCKED'); return []; }
     const j = await r.json();
     if (j.error !== 0) return [];
@@ -218,7 +81,15 @@
     const items = [];
     for (const s of sales) {
       if (s.items) {
-        for (const it of s.items) items.push({ ...it, shopId, start_time: it.start_time || s.start_time, end_time: it.end_time || s.end_time, price: it.price || it.applied_product_promo_price || 0, price_before_discount: it.price_before_discount || 0, model_ids: it.model_ids || [] });
+        for (const it of s.items) items.push({
+          ...it,
+          shopId,
+          start_time: it.start_time || s.start_time,
+          end_time: it.end_time || s.end_time,
+          price: it.price || it.applied_product_promo_price || 0,
+          price_before_discount: it.price_before_discount || 0,
+          model_ids: it.model_ids || []
+        });
       }
     }
     return items;
@@ -232,7 +103,7 @@
       if (flashAbort.signal.aborted) break;
       const batchSize = Math.floor(Math.random() * 4) + 2;
       const batch = shopIds.slice(i, i + batchSize);
-      prog.innerHTML = 'Batch ' + (i + 1) + '-' + Math.min(i + batchSize, shopIds.length) + '/' + shopIds.length + '...';
+      if (prog) prog.innerHTML = 'Batch ' + (i + 1) + '-' + Math.min(i + batchSize, shopIds.length) + '/' + shopIds.length + '...';
       for (const sid of batch) {
         if (flashAbort.signal.aborted) break;
         try {
@@ -246,191 +117,66 @@
           collected.push(...filtered);
         } catch (e) {
           if (e.message === 'BLOCKED') {
-            prog.innerHTML = '<br><span class="warning">🚫 Bị chặn (403/429). Dừng lại.</span>';
+            if (prog) prog.innerHTML = '<br><span class="warning">🚫 Bị chặn (403/429). Dừng lại.</span>';
             i = shopIds.length;
             break;
-          } else { prog.innerHTML += '<br><span style="color:red">Lỗi shop ' + sid + ': ' + e.message + '</span>'; }
+          }
         }
       }
       i += batch.length;
-      if (i < shopIds.length && !flashAbort.signal.aborted && !prog.innerHTML.includes('Bị chặn')) {
+      if (i < shopIds.length && !flashAbort.signal.aborted) {
         const delay = 4000 + Math.floor(Math.random() * 6000);
-        prog.innerHTML = 'Chờ ' + (delay / 1000).toFixed(1) + 's...';
+        if (prog) prog.innerHTML = 'Chờ ' + (delay / 1000).toFixed(1) + 's...';
         await new Promise(r => setTimeout(r, delay));
       }
     }
     return collected;
   }
 
-  $('flash-search').onclick = async () => {
-    const mode = document.querySelector('input[name="flash-mode"]:checked').value;
-    const input = $('flash-input').value.trim();
-    const min = parseInt($('flash-min').value) || 70;
-    const minPriceK = parseInt($('flash-price-min').value) || 0;
-    const maxShop = parseInt($('flash-maxshop').value) || 10;
-    const ongoing = $('flash-ongoing').checked;
+  async function scanFlashSale(minDiscount, minPriceK, maxShop, ongoing) {
     const now = Math.floor(Date.now() / 1000);
-    const prog = $('flash-progress');
-    prog.innerHTML = '';
-    flashItems = [];
-    $('flash-copyall').style.display = 'none';
     flashAbort = new AbortController();
-    flashUpdateInfo();
-    let shopIds = [];
-    if (mode === 'html') {
-      prog.innerHTML = 'Đang quét HTML...';
-      const all = extractShopIdsFromHTML();
-      if (!all.length) { prog.innerHTML = '<p style="color:red">Không tìm thấy shop.</p>'; return; }
-      const scanned = flashGetScanned();
-      const newIds = all.filter(id => !scanned.includes(id));
-      if (!newIds.length) { prog.innerHTML = 'Tất cả shop đã quét.'; return; }
-      shopIds = newIds.slice(0, maxShop);
-      prog.innerHTML = 'Tìm thấy ' + all.length + ' shop, ' + newIds.length + ' mới. Quét ' + shopIds.length + ' shop.';
-    } else if (mode === 'id') {
-      if (!input || !/^[\d\s,]+$/.test(input)) { prog.innerHTML = '<p style="color:red">Danh sách ID không hợp lệ.</p>'; return; }
-      shopIds = input.split(/[\s,]+/).filter(id => /^\d+$/.test(id));
-      const scanned = flashGetScanned();
-      shopIds = shopIds.filter(id => !scanned.includes(id));
-      if (!shopIds.length) { prog.innerHTML = 'Tất cả shop đã quét.'; return; }
-      shopIds = shopIds.slice(0, maxShop);
-      prog.innerHTML = 'Dùng ' + shopIds.length + ' shop nhập tay.';
-    } else if (mode === 'category') {
-      const referer = location.href;
-      let catId = input;
-      if (!catId) { const m = referer.match(/cat\.(\d+)/); if (m) catId = m[1]; else { prog.innerHTML = '<p style="color:red">Không tìm thấy Category ID.</p>'; return; } }
-      if (!referer.includes('cat.')) { prog.innerHTML = '<p style="color:red">Phải đứng ở trang category.</p>'; return; }
-      prog.innerHTML = 'Đang lấy shop từ category ' + catId + '...';
-      try {
-        const ids = await (async () => {
-          const set = new Set(); let off = 0, lim = 60;
-          while (true) {
-            const r = await fetch('https://shopee.vn/api/v4/recommend/recommend_v2', { method: 'POST', headers: { 'content-type': 'application/json', 'x-requested-with': 'XMLHttpRequest', 'x-api-source': 'pc', 'x-csrftoken': getCsrfToken(), Referer: referer }, credentials: 'include', body: JSON.stringify({ catid: parseInt(catId), limit: lim, offset: off, bundle: 'category_landing_page', cat_level: 1, need_dynamic_translation: true }) });
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            const j = await r.json();
-            if (j.error) throw new Error(j.error_msg);
-            const data = j.data;
-            if (!data || !data.units) break;
-            for (const u of data.units) { const sid = u.item?.item_data?.shopid; if (sid) set.add(sid); }
-            const total = data.total || 0;
-            off += lim;
-            prog.innerHTML = 'Đã quét ' + off + '/' + total + ' sản phẩm...';
-            if (off >= total) break;
-            await new Promise(r => setTimeout(r, 2000 + Math.random() * 3000));
-          }
-          return [...set];
-        })();
-        const scanned = flashGetScanned();
-        const newShops = ids.filter(id => !scanned.includes(id));
-        if (!newShops.length) { prog.innerHTML = 'Tất cả shop đã quét.'; return; }
-        shopIds = newShops.slice(0, maxShop);
-        prog.innerHTML = 'Lấy ' + shopIds.length + ' shop mới.';
-      } catch (e) { prog.innerHTML = '<p style="color:red">Lỗi: ' + e.message + '</p>'; return; }
-    }
-    prog.innerHTML += '<br>Đang quét Flash Sale...';
-    const collected = await processBatchFlash(shopIds, min, ongoing, now, prog, minPriceK);
-    if (!flashAbort.signal.aborted) { flashAddScanned(shopIds); flashUpdateInfo(); }
+    const all = extractShopIdsFromHTML();
+    if (!all.length) return { error: 'Không tìm thấy shop nào trên trang.' };
+    const scanned = flashGetScanned();
+    const newIds = all.filter(id => !scanned.includes(id));
+    if (!newIds.length) return { error: 'Tất cả shop đã quét.' };
+    const shopIds = newIds.slice(0, maxShop);
+    const collected = await processBatchFlash(shopIds, minDiscount, ongoing, now, $('flash-progress'), minPriceK);
+    if (!flashAbort.signal.aborted) flashAddScanned(shopIds);
     flashItems = collected.sort((a, b) => b.raw_discount - a.raw_discount);
-    prog.innerHTML = 'Đã quét ' + shopIds.length + ' shop, tìm thấy ' + flashItems.length + ' SP ≥ ' + min + '%' + (minPriceK > 0 ? ', giá gốc ≥ ' + minPriceK + 'k' : '') + (ongoing ? ' (đang diễn ra)' : '') + '.';
-    flashItems = flashItems.map(it => ({ ...it, link: 'https://shopee.vn/product/' + (it.shopid || it.shop_id) + '/' + (it.itemid || it.item_id), stock: it.stock || 0 }));
-    flashRender();
-  };
+    const resultText = '⚡ Flash Sale:\n' + flashItems.map(i => {
+      const upcoming = i.start_time > now;
+      let prefix = '';
+      if (upcoming) {
+        const d = new Date(i.start_time * 1000);
+        const mins = d.getMinutes();
+        prefix = '- ' + d.getHours() + 'H' + (mins > 0 ? mins.toString().padStart(2, '0') : '') + ' ';
+      }
+      return prefix + '-' + i.raw_discount + '% còn ' + flashFormatPrice(i.price) + ' - ' + flashTruncName(i.name) + ': https://shopee.vn/product/' + i.shopid + '/' + i.itemid + ' [SL: ' + (i.stock || 0) + ']';
+    }).join('\n');
+    return { success: true, text: resultText, count: flashItems.length };
+  }
 
-  // ================= VOUCHER =================
+  // Voucher functions (tương tự, viết gọn lại)
   const VOUCH_KEY = 'vcat_scanned_shops';
   let vouchVouchers = [], vouchAbort = null;
   function vouchGetScanned() { try { return JSON.parse(localStorage.getItem(VOUCH_KEY)) || []; } catch (e) { return []; } }
   function vouchAddScanned(ids) { const cur = vouchGetScanned(); const upd = [...new Set([...cur, ...ids])]; localStorage.setItem(VOUCH_KEY, JSON.stringify(upd)); return upd; }
-  function vouchReset() { localStorage.removeItem(VOUCH_KEY); }
-  function vouchUpdateInfo() { const s = vouchGetScanned(); $('vouch-info').textContent = 'Đã quét ' + s.length + ' shop (bỏ qua khi quét lại)'; }
   const vToK = v => Math.round(v / 100000000);
   const vFormatK = v => { const num = v / 100000; if (num >= 1000000) return (num / 1000000).toFixed(1) + 'tr'; if (num >= 1000) return (num / 1000).toFixed(0) + 'k'; return num.toLocaleString('vi-VN'); };
   function vIsPercent(v) { return v.reward_percentage > 0 || v.reward_type === 1; }
   function formatVouchTime(ts) { if (!ts) return ''; const d = new Date(ts * 1000); const hours = d.getHours(); const minutes = d.getMinutes(); if (minutes === 0) return hours + 'h'; return hours + 'h' + minutes; }
 
-  function vouchRender() {
-    const fpct = parseFloat($('vouch-fpct').value) || 0;
-    const fminRaw = $('vouch-fmin').value.trim();
-    const fmin = (fminRaw !== '' && !isNaN(parseFloat(fminRaw))) ? parseFloat(fminRaw) : null;
-    const fcap = parseFloat($('vouch-fcap').value) || 0;
-    const now = Math.floor(Date.now() / 1000);
-    const d = $('vouch-result');
-    d.innerHTML = '';
-    let filtered = vouchVouchers.filter(v => {
-      const pct = vIsPercent(v);
-      if (pct) { if (fpct > 0 && v.reward_percentage < fpct) return false; if (fcap > 0 && vToK(v.reward_cap) < fcap) return false; }
-      else { if (fcap > 0 && vToK(v.reward_value) < fcap) return false; }
-      if (fmin !== null) { if (fmin === 0) { if (v.min_spend !== 0) return false; } else { if (v.min_spend === 0) return false; if (vToK(v.min_spend) < fmin) return false; } }
-      return true;
-    });
-    if (!filtered.length) { d.innerHTML = '<p>Không có voucher khớp.</p>'; $('vouch-copyall').style.display = 'none'; return; }
-    const activeVouchers = filtered.filter(v => !v.start_time || v.start_time <= now);
-    const upcomingVouchers = filtered.filter(v => v.start_time && v.start_time > now).sort((a, b) => a.start_time - b.start_time);
-    const grouped = {};
-    upcomingVouchers.forEach(v => { const d = new Date(v.start_time * 1000); const key = d.toDateString(); if (!grouped[key]) grouped[key] = []; grouped[key].push(v); });
-    let h = '';
-    activeVouchers.forEach(v => {
-      let desc;
-      if (vIsPercent(v)) desc = 'giảm ' + v.reward_percentage + '% max ' + vFormatK(v.reward_cap) + '/' + (v.min_spend > 0 ? vFormatK(v.min_spend) : '0đ');
-      else desc = 'giảm ' + vFormatK(v.reward_value) + '/' + (v.min_spend > 0 ? vFormatK(v.min_spend) : '0đ');
-      const link = 'https://shopee.vn/search?promotionId=' + v.promotionid + '&signature=' + v.signature + '&voucherCode=' + v.voucher_code;
-      const text = v.voucher_code + ' ' + desc + ' áp list: ' + link;
-      h += '<div class="vitem" style="margin:6px 0;display:flex;align-items:center;flex-wrap:wrap"><span class="vtext" style="flex:1;word-break:break-all">' + text + '</span></div>';
-    });
-    if (activeVouchers.length && Object.keys(grouped).length) h += '<hr style="margin:10px 0">';
-    Object.keys(grouped).sort().forEach(dateKey => {
-      const d = new Date(dateKey);
-      const day = d.getDate().toString().padStart(2, '0');
-      const month = (d.getMonth() + 1).toString().padStart(2, '0');
-      h += '<div class="vouch-date-header">' + day + '/' + month + '</div>';
-      grouped[dateKey].forEach(v => {
-        let desc;
-        if (vIsPercent(v)) desc = 'giảm ' + v.reward_percentage + '% max ' + vFormatK(v.reward_cap) + '/' + (v.min_spend > 0 ? vFormatK(v.min_spend) : '0đ');
-        else desc = 'giảm ' + vFormatK(v.reward_value) + '/' + (v.min_spend > 0 ? vFormatK(v.min_spend) : '0đ');
-        const link = 'https://shopee.vn/search?promotionId=' + v.promotionid + '&signature=' + v.signature + '&voucherCode=' + v.voucher_code;
-        const prefix = '- ' + formatVouchTime(v.start_time) + ' ';
-        const text = prefix + v.voucher_code + ' ' + desc + ' áp list: ' + link;
-        h += '<div class="vitem" style="margin:6px 0;display:flex;align-items:center;flex-wrap:wrap"><span class="vtext" style="flex:1;word-break:break-all">' + text + '</span></div>';
-      });
-    });
-    d.innerHTML = h;
-    $('vouch-copyall').style.display = 'block';
-  }
-
-  $('vouch-copyall').onclick = () => {
-    const now = Math.floor(Date.now() / 1000);
-    const texts = vouchVouchers.filter(v => {
-      const fpct = parseFloat($('vouch-fpct').value) || 0;
-      const fminRaw = $('vouch-fmin').value.trim();
-      const fmin = (fminRaw !== '' && !isNaN(parseFloat(fminRaw))) ? parseFloat(fminRaw) : null;
-      const fcap = parseFloat($('vouch-fcap').value) || 0;
-      const pct = vIsPercent(v);
-      if (pct) { if (fpct > 0 && v.reward_percentage < fpct) return false; if (fcap > 0 && vToK(v.reward_cap) < fcap) return false; }
-      else { if (fcap > 0 && vToK(v.reward_value) < fcap) return false; }
-      if (fmin !== null) { if (fmin === 0) { if (v.min_spend !== 0) return false; } else { if (v.min_spend === 0) return false; if (vToK(v.min_spend) < fmin) return false; } }
-      return true;
-    }).map(v => {
-      let desc;
-      if (vIsPercent(v)) desc = 'giảm ' + v.reward_percentage + '% max ' + vFormatK(v.reward_cap) + '/' + (v.min_spend > 0 ? vFormatK(v.min_spend) : '0đ');
-      else desc = 'giảm ' + vFormatK(v.reward_value) + '/' + (v.min_spend > 0 ? vFormatK(v.min_spend) : '0đ');
-      const link = 'https://shopee.vn/search?promotionId=' + v.promotionid + '&signature=' + v.signature + '&voucherCode=' + v.voucher_code;
-      let prefix = '';
-      if (v.start_time && v.start_time > now) { prefix = '- ' + formatVouchTime(v.start_time) + ' '; }
-      return prefix + v.voucher_code + ' ' + desc + ' áp list: ' + link;
-    }).join('\n');
-    navigator.clipboard.writeText(texts).then(() => {
-      const o = $('vouch-copyall').textContent;
-      $('vouch-copyall').textContent = '✓ Đã copy';
-      setTimeout(() => $('vouch-copyall').textContent = o, 1500);
-    });
-    sendResultToServer('🎫 Voucher:\n' + texts); // Gửi kết quả về Telegram
-  };
-
-  ['vouch-fpct', 'vouch-fmin', 'vouch-fcap'].forEach(id => $(id).addEventListener('input', vouchRender));
-  $('vouch-reset').onclick = () => { if (confirm('Xóa lịch sử quét Voucher?')) { vouchReset(); vouchUpdateInfo(); } };
-
   async function fetchVouchersForShop(shopId) {
     const ctrl = vouchAbort;
-    const r = await fetch('https://shopee.vn/api/v4/shop/get_shop_tab', { method: 'POST', headers: { 'content-type': 'application/json', 'x-requested-with': 'XMLHttpRequest', 'x-api-source': 'pc', 'x-csrftoken': getCsrfToken() }, credentials: 'include', signal: ctrl ? ctrl.signal : undefined, body: JSON.stringify({ entry_point: 'ShopByPDP', rcmd_condition: { cat_id: 0, item_id: 0, upstream: 'pdp' }, shopid: parseInt(shopId) }) });
+    const r = await fetch('https://shopee.vn/api/v4/shop/get_shop_tab', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-requested-with': 'XMLHttpRequest', 'x-api-source': 'pc', 'x-csrftoken': getCsrfToken() },
+      credentials: 'include',
+      signal: ctrl ? ctrl.signal : undefined,
+      body: JSON.stringify({ entry_point: 'ShopByPDP', rcmd_condition: { cat_id: 0, item_id: 0, upstream: 'pdp' }, shopid: parseInt(shopId) })
+    });
     if (!r.ok) { if (r.status === 403 || r.status === 429) throw new Error('BLOCKED'); return []; }
     const j = await r.json();
     if (j.error !== 0) return [];
@@ -448,101 +194,84 @@
       if (vouchAbort.signal.aborted) break;
       const batchSize = Math.floor(Math.random() * 4) + 2;
       const batch = shopIds.slice(i, i + batchSize);
-      prog.innerHTML = 'Batch ' + (i + 1) + '-' + Math.min(i + batchSize, shopIds.length) + '/' + shopIds.length + '...';
+      if (prog) prog.innerHTML = 'Batch ' + (i + 1) + '-' + Math.min(i + batchSize, shopIds.length) + '/' + shopIds.length + '...';
       for (const sid of batch) {
         if (vouchAbort.signal.aborted) break;
         try {
           const v = await fetchVouchersForShop(sid);
           vouchers.push(...v);
         } catch (e) {
-          if (e.message === 'BLOCKED') { prog.innerHTML = '<br><span class="warning">🚫 Bị chặn (403/429). Dừng lại.</span>'; i = shopIds.length; break; }
-          else { prog.innerHTML += '<br><span style="color:red">Lỗi shop ' + sid + ': ' + e.message + '</span>'; }
+          if (e.message === 'BLOCKED') {
+            if (prog) prog.innerHTML = '<br><span class="warning">🚫 Bị chặn (403/429). Dừng lại.</span>';
+            i = shopIds.length;
+            break;
+          }
         }
       }
       i += batch.length;
-      if (i < shopIds.length && !vouchAbort.signal.aborted && !prog.innerHTML.includes('Bị chặn')) {
+      if (i < shopIds.length && !vouchAbort.signal.aborted) {
         const delay = 4000 + Math.floor(Math.random() * 6000);
-        prog.innerHTML = 'Chờ ' + (delay / 1000).toFixed(1) + 's...';
+        if (prog) prog.innerHTML = 'Chờ ' + (delay / 1000).toFixed(1) + 's...';
         await new Promise(r => setTimeout(r, delay));
       }
     }
     return vouchers;
   }
 
-  $('vouch-search').onclick = async () => {
-    const mode = document.querySelector('input[name="vouch-mode"]:checked').value;
-    const input = $('vouch-input').value.trim();
-    const maxShop = parseInt($('vouch-maxshop').value) || 5;
-    const prog = $('vouch-progress');
-    prog.innerHTML = '';
-    vouchVouchers = [];
-    $('vouch-copyall').style.display = 'none';
+  async function scanVoucher() {
     vouchAbort = new AbortController();
-    vouchUpdateInfo();
-    let shopIds = [];
-    if (mode === 'html') {
-      prog.innerHTML = 'Đang quét HTML...';
-      const all = extractShopIdsFromHTML();
-      if (!all.length) { prog.innerHTML = '<p style="color:red">Không tìm thấy shop.</p>'; return; }
-      const scanned = vouchGetScanned();
-      const newIds = all.filter(id => !scanned.includes(id));
-      if (!newIds.length) { prog.innerHTML = 'Tất cả shop đã quét.'; return; }
-      shopIds = newIds.slice(0, maxShop);
-      prog.innerHTML = 'Tìm thấy ' + all.length + ' shop, ' + newIds.length + ' mới. Quét ' + shopIds.length + ' shop.';
-    } else if (mode === 'id') {
-      if (!input || !/^[\d\s,]+$/.test(input)) { prog.innerHTML = '<p style="color:red">Danh sách ID không hợp lệ.</p>'; return; }
-      shopIds = input.split(/[\s,]+/).filter(id => /^\d+$/.test(id));
-      const scanned = vouchGetScanned();
-      shopIds = shopIds.filter(id => !scanned.includes(id));
-      if (!shopIds.length) { prog.innerHTML = 'Tất cả shop đã quét.'; return; }
-      shopIds = shopIds.slice(0, maxShop);
-      prog.innerHTML = 'Dùng ' + shopIds.length + ' shop nhập tay.';
-    }
-    prog.innerHTML += '<br>Đang lấy voucher...';
-    const vouchers = await processBatchVoucher(shopIds, prog);
-    if (!vouchAbort.signal.aborted) { vouchAddScanned(shopIds); vouchUpdateInfo(); }
-    if (!vouchers.length) { prog.innerHTML += '<br>Không tìm thấy voucher.'; }
-    else { prog.innerHTML = 'Đã lấy ' + vouchers.length + ' voucher từ ' + shopIds.length + ' shop.'; vouchVouchers = vouchers; vouchRender(); }
-  };
+    const all = extractShopIdsFromHTML();
+    if (!all.length) return { error: 'Không tìm thấy shop nào.' };
+    const scanned = vouchGetScanned();
+    const newIds = all.filter(id => !scanned.includes(id));
+    if (!newIds.length) return { error: 'Tất cả shop đã quét.' };
+    const shopIds = newIds.slice(0, 5); // mặc định 5 shop
+    const vouchers = await processBatchVoucher(shopIds, $('vouch-progress'));
+    if (!vouchAbort.signal.aborted) vouchAddScanned(shopIds);
+    vouchVouchers = vouchers;
+    const now = Math.floor(Date.now() / 1000);
+    const filtered = vouchVouchers.filter(v => true); // không lọc gì thêm
+    const resultText = '🎫 Voucher:\n' + filtered.map(v => {
+      let desc = vIsPercent(v) ? `giảm ${v.reward_percentage}% max ${vFormatK(v.reward_cap)}/${v.min_spend > 0 ? vFormatK(v.min_spend) : '0đ'}` : `giảm ${vFormatK(v.reward_value)}/${v.min_spend > 0 ? vFormatK(v.min_spend) : '0đ'}`;
+      let prefix = '';
+      if (v.start_time && v.start_time > now) prefix = '- ' + formatVouchTime(v.start_time) + ' ';
+      return prefix + v.voucher_code + ' ' + desc + ' áp list: https://shopee.vn/search?promotionId=' + v.promotionid + '&signature=' + v.signature + '&voucherCode=' + v.voucher_code;
+    }).join('\n');
+    return { success: true, text: resultText, count: vouchers.length };
+  }
 
   // ================= WEBSOCKET =================
   let ws = null;
   let wsReconnectTimer = null;
-
-  function updateStatus(connected) {
-    const el = $('ws-status');
-    if (el) {
-      el.textContent = connected ? '🟢' : '🔴';
-      el.title = connected ? 'Đã kết nối server' : 'Mất kết nối - Click để thử lại';
-    }
-  }
+  let pingInterval = null;
 
   function connectWebSocket() {
     if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
     ws = new WebSocket(SERVER_WS_URL);
     ws.onopen = () => {
-      updateStatus(true);
+      console.log('WS connected');
       if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
+      pingInterval = setInterval(() => {
+        if (ws && ws.readyState === WebSocket.OPEN) ws.send('ping');
+      }, 25000);
     };
-    ws.onmessage = (event) => {
+    ws.onmessage = async (event) => {
       try {
         const cmd = JSON.parse(event.data);
         if (cmd.action === 'scan_flash') {
-          $('flash-min').value = cmd.minDiscount || 70;
-          $('flash-price-min').value = cmd.minPriceK || 0;
-          $('flash-maxshop').value = cmd.maxShop || 10;
-          document.querySelector('input[name="flash-mode"][value="html"]').checked = true;
-          document.querySelector('.tab-btn[data-tab="flash"]').click();
-          $('flash-search').click();
+          const result = await scanFlashSale(cmd.minDiscount || 70, cmd.minPriceK || 0, cmd.maxShop || 10, false);
+          if (result.success) sendResultToServer(result.text);
+          else sendResultToServer('❌ ' + result.error);
         } else if (cmd.action === 'scan_voucher') {
-          document.querySelector('input[name="vouch-mode"][value="html"]').checked = true;
-          document.querySelector('.tab-btn[data-tab="voucher"]').click();
-          $('vouch-search').click();
+          const result = await scanVoucher();
+          if (result.success) sendResultToServer(result.text);
+          else sendResultToServer('❌ ' + result.error);
         }
-      } catch (e) {}
+      } catch (e) { console.error('WS message error', e); }
     };
     ws.onclose = () => {
-      updateStatus(false);
+      console.log('WS disconnected');
+      clearInterval(pingInterval);
       ws = null;
       if (!wsReconnectTimer) wsReconnectTimer = setTimeout(connectWebSocket, 10000);
     };
@@ -550,18 +279,21 @@
   }
 
   function sendResultToServer(text) {
+    console.log('Sending to server, length:', text.length);
     if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(text);
+      if (text.length > 4000) {
+        // Chia nhỏ nếu quá dài
+        for (let i = 0; i < text.length; i += 4000) {
+          ws.send(text.substring(i, i + 4000));
+        }
+      } else {
+        ws.send(text);
+      }
+    } else {
+      console.log('WS not open, cannot send');
     }
   }
 
-  $('ws-status').addEventListener('click', connectWebSocket);
-
-  // Khởi động WebSocket
+  // Bắt đầu kết nối
   connectWebSocket();
-
-  // Chạy scan lần đầu
-  scanPage();
-  flashUpdateInfo();
-  vouchUpdateInfo();
 })();

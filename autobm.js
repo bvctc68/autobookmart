@@ -608,10 +608,19 @@
       ws.send(`🎯 SCP Deals: ${scpDeals.length} deals, ${scpVouchers.length} vouchers`);
     }
   };
-  // ================= SCAN GỢI Ý (RCMD) =================
+  // ================= SCAN GỢI Ý (RCMD) - ĐÃ SỬA =================
   function getShopIdFromUrl() {
-    const m = location.href.match(/shop\/(\d+)/);
-    return m ? m[1] : null;
+    const href = location.href;
+    // URL shop hoặc recommendation-landing
+    let m = href.match(/\/shop\/(\d+)/);
+    if (m) return m[1];
+    // URL sản phẩm dạng i.SHOPID.ITEMID
+    m = href.match(/i\.(\d+)\.\d+/);
+    if (m) return m[1];
+    // URL sản phẩm dạng /product/SHOPID/ITEMID
+    m = href.match(/\/product\/(\d+)\/\d+/);
+    if (m) return m[1];
+    return null;
   }
 
   async function fetchRcmdItemsPage(shopId, offset, limit = 48) {
@@ -646,21 +655,32 @@
     let allItems = [];
     let offset = 0;
     const limit = 48;
+    let totalFromApi = null;
+
     while (true) {
-      prog.innerHTML = `Đang tải trang offset=${offset}...`;
+      prog.innerHTML = `Đang tải offset=${offset}... (${allItems.length}/${totalFromApi ?? '?'} sản phẩm)`;
+
       let data;
       try {
         data = await fetchRcmdItemsPage(shopId, offset, limit);
       } catch (e) {
-        prog.innerHTML = `<span class="warning">Lỗi khi tải dữ liệu: ${e.message}</span>`;
-        return [];
+        prog.innerHTML = `<span class="warning">Lỗi trang offset=${offset}: ${e.message}. Dùng ${allItems.length} SP đã lấy.</span>`;
+        break; // Giữ kết quả đã lấy
       }
 
-      const cards = (data.centralize_item_card && data.centralize_item_card.item_cards) ? data.centralize_item_card.item_cards : [];
-      if (cards.length === 0) break;
-      allItems = allItems.concat(cards);
+      // Lấy total từ response đầu tiên
+      if (totalFromApi === null && data.total > 0) {
+        totalFromApi = data.total;
+      }
 
+      const cards = data?.centralize_item_card?.item_cards || [];
+      if (cards.length === 0) break;
+
+      allItems.push(...cards);
+
+      // Điều kiện dừng
       if (data.no_more === true) break;
+      if (totalFromApi !== null && allItems.length >= totalFromApi) break;
       if (allItems.length >= maxItems) break;
       if (cards.length < limit) break;
 
@@ -671,9 +691,10 @@
     if (allItems.length > maxItems) allItems = allItems.slice(0, maxItems);
 
     const filtered = allItems.filter(card => {
-      const discount = (card.item_card_display_price && card.item_card_display_price.discount) || 0;
+      const discount = card.item_card_display_price?.discount || 0;
       return discount >= minDiscount;
     });
+    console.log(`Tổng: ${allItems.length} SP, sau lọc ≥${minDiscount}%: ${filtered.length} SP`);
     return filtered;
   }
 
@@ -687,7 +708,7 @@
     let html = '';
     items.forEach(card => {
       const dp = card.item_card_display_price || {};
-      const name = (card.item_card_displayed_asset && card.item_card_displayed_asset.name) || card.name || 'Không tên';
+      const name = card.item_card_displayed_asset?.name || card.name || 'Không tên';
       const shortName = name.length > 40 ? name.substring(0, 40) + '...' : name;
       const discount = dp.discount || 0;
       const price = dp.price || 0;
@@ -713,7 +734,7 @@
     if (mode === 'url') {
       shopId = getShopIdFromUrl();
       if (!shopId) {
-        $('rcmd-progress').innerHTML = '<span class="warning">Không tìm thấy shop ID trong URL. Hãy vào trang shop.</span>';
+        $('rcmd-progress').innerHTML = '<span class="warning">Không tìm thấy shop ID trong URL. Hãy vào trang shop hoặc sản phẩm.</span>';
         return;
       }
     } else {

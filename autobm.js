@@ -766,7 +766,7 @@
     }
   };
 
-  // ================= SCAN GỢI Ý (RCMD ITEMS) =================
+  // ================= SCAN GỢI Ý (RCMD ITEMS) - ĐÃ SỬA =================
   function getShopIdFromUrl() {
     const m = location.href.match(/shop\/(\d+)/);
     return m ? m[1] : null;
@@ -788,14 +788,15 @@
         'Content-Type': 'application/json',
         'x-requested-with': 'XMLHttpRequest',
         'x-api-source': 'pc',
-        'x-csrftoken': getCsrfToken()
+        'x-csrftoken': getCsrfToken(),
+        'Referer': `https://shopee.vn/shop/${shopId}/recommendation-landing?upstream=pdp`
       },
       credentials: 'include',
       body: JSON.stringify(body)
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const json = await res.json();
-    if (json.error !== 0) throw new Error(json.error_msg);
+    if (json.error !== 0) throw new Error(json.error_msg || 'API error');
     return json.data;
   }
 
@@ -805,14 +806,32 @@
     const limit = 48;
     while (true) {
       prog.innerHTML = `Đang tải trang offset=${offset}...`;
-      const data = await fetchRcmdItemsPage(shopId, offset, limit);
-      const cards = data.centralize_item_card?.item_cards || [];
+      let data;
+      try {
+        data = await fetchRcmdItemsPage(shopId, offset, limit);
+      } catch (e) {
+        prog.innerHTML = `<span class="warning">Lỗi khi tải dữ liệu: ${e.message}</span>`;
+        return [];
+      }
+
+      const cards = data?.centralize_item_card?.item_cards || [];
+      if (cards.length === 0) break; // Hết sản phẩm
       allItems.push(...cards);
-      if (data.no_more || allItems.length >= maxItems) break;
+
+      // Kiểm tra điều kiện dừng
+      if (data.no_more === true) break;
+      if (allItems.length >= maxItems) break;
+      if (cards.length < limit) break; // Trang cuối không đủ limit -> hết
+
       offset += limit;
+      // Delay ngẫu nhiên giữa các trang
       await new Promise(r => setTimeout(r, 500 + Math.random() * 1000));
     }
+
+    // Cắt theo maxItems
     if (allItems.length > maxItems) allItems = allItems.slice(0, maxItems);
+
+    // Lọc theo discount tối thiểu
     return allItems.filter(card => {
       const discount = card.item_card_display_price?.discount || 0;
       return discount >= minDiscount;
@@ -828,20 +847,20 @@
     }
     let html = '';
     items.forEach(card => {
-      const dp = card.item_card_display_price;
-      const name = card.item_card_displayed_asset?.name || 'Không tên';
+      const dp = card.item_card_display_price || {};
+      const name = card.item_card_displayed_asset?.name || card.name || 'Không tên';
       const shortName = name.length > 40 ? name.substring(0, 40) + '...' : name;
-      const discount = dp?.discount || 0;
-      const price = dp?.price || 0;
-      const originalPrice = dp?.strikethrough_price || dp?.original_price || 0;
+      const discount = dp.discount || 0;
+      const price = dp.price || 0;
+      const originalPrice = dp.strikethrough_price || dp.original_price || 0;
       const link = `https://shopee.vn/product/${card.shopid}/${card.itemid}`;
       let priceText = (price / 100000).toLocaleString('vi-VN') + 'đ';
       if (originalPrice > price) {
         priceText = `<s>${(originalPrice/100000).toLocaleString('vi-VN')}đ</s> ${priceText}`;
       }
       let voucherText = '';
-      const pv = dp?.recommended_platform_voucher_info;
-      const sv = dp?.recommended_shop_voucher_info;
+      const pv = dp.recommended_platform_voucher_info;
+      const sv = dp.recommended_shop_voucher_info;
       if (pv) {
         const vDisc = pv.voucher_discount ? fmtK(pv.voucher_discount) : '0k';
         const vMin = pv.min_spend ? fmtK(pv.min_spend) : '0đ';
